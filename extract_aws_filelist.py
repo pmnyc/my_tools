@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-This is to export an S3 folder's list of files to a .csv file. The list doesn't contain subfolder names, but contains all files inside the subfolders
+This is to export an S3 folder's list of files to a .csv file.
+The list doesn't contain subfolder names, but contains all files inside the subfolders
 @author: pengma
 
 sample usage:
