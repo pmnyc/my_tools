@@ -1,2 +1,2 @@
-# tools
-Python, R and other useful tools
+# Tools
+Python, R and other small handy tools
