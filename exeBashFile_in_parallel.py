@@ -4,7 +4,7 @@ This is to run simple bash file (on Linux) using Python's simple parallel comput
 @author: pengma
 
 sample usage:
-    $ python run_bash_file_in_simple_parallel.py mybashfile.sh
+    $ python exeBashFile_in_parallel.py mybashfile.sh
 where, the mybashfile.sh is the bash file one wants to distribute
 
 For example, $ echo 'ls -l' > mybashfile.sh
@@ -31,7 +31,7 @@ def runcommd(x):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print "Sample Usage is $ python run_bash_file_in_simple_parallel.py <mybashfile.sh>"
+        print "Sample Usage is $ python exeBashFile_in_parallel.py <mybashfile.sh>"
         exit(1)
     else:
         bashfile = sys.argv[-1]
