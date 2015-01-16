@@ -26,7 +26,7 @@ Example: JSON file is config.json
 import json
 #from pprint import pprint
 def loadJson(filename):
-    json_data=open('config.json','r')##change
+    json_data=open(filename,'r')##change
     data = json.load(json_data)
     #pprint(data)
     json_data.close()
