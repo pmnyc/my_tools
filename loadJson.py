@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Load Simple JSON configuraiton
+Load Simple JSON configuration
 @author: pengma
 
 ---------------------
