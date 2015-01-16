@@ -17,7 +17,6 @@ stepAIC_Fun <- function(model,data=list()) {
     ##This is to perform the stepwise regression for linear regression
     VarList <- names(model$model)[-1];
 	if (any(VarList == "(weights)")) {VarList <- VarList[-which(VarList == "(weights)")]};
-	##if (!exists("VarList")) {VarList <- c("HDD","HDD_2","CDD","CDD_2")};
 
 	Fun_MatrixToArray <- function(x) {return(tapply(x,rep(1:nrow(x),each=ncol(x)),function(i) i))};
   
@@ -31,18 +30,9 @@ stepAIC_Fun <- function(model,data=list()) {
 	y2 <- unique(do.call(c,y));
 	VarList_CombArray <- y2;
 	VarList_CombArray[length(y2)+1] <- list(VarList);
-  
-    ##Create a test data for this function
-	##HDD <- seq(10);
-	##HDD_2 <- HDD^2;
-	##Vol <- 2+1.5*HDD+0.05*rnorm(10);
-	##
-	##Test Data is Generated and discarded
-	
+  	
 	formula <- model$call
 	class(formula) = "character";
-	##sample formula will look like
-		## "lm" "Vol ~ HDD + HDD_2" "rep(1, length(Vol))"
 	Formula_Split_Loc <- gregexpr(pattern ='~',formula[2])[[1]][1];
 	
 	Fun_RunModelByFormula <- function(x) {
