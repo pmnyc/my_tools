@@ -1,5 +1,5 @@
 # This is to perform a step AIC model process given linear model and data (frame)
-# @author: pengma
+# @author: pm
 
 # For example,
 #   model <- lm(y=x1+x2, weights=rep(1,length(y)));

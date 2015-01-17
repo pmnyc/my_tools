@@ -1,6 +1,7 @@
-# @author: pengma
+# Load JSON file in R
+# @author: pm
 #sample usage:
-# loadJson_fun("config.json")
+#   loadJson_fun("config.json")
 
 loadJson_fun = function(jsonfilename){
     parseJasonList_Fun <- function(list,listname){

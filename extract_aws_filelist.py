@@ -2,7 +2,7 @@
 """
 This is to export an S3 folder's list of files to a .csv file.
 The list doesn't contain subfolder names, but contains all files inside the subfolders
-@author: pengma
+@author: pm
 
 sample usage:
 $ python extract_aws_filelist.py s3://mybucket/myfolder myoutput.csv

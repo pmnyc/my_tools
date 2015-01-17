@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 This is to run simple bash file (on Linux) using Python's simple parallel computing
-@author: pengma
+@author: pm
 
 sample usage:
     $ python exeBashFile_in_parallel.py mybashfile.sh

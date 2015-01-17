@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Load Simple JSON configuration
-@author: pengma
+@author: pm
 
 ---------------------
 Sample Usage:

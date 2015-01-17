@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 This is to comibne all csv files of same format into one single csv file
-@author: pengma
+@author: pm
 sample usage:
     $ python combine_all_csv.py 'combinedCSV/combinedcsv.csv' --hasheader=true/false
 where, 'combinedCSV/combinedcsv.csv' gives the directory of the output csv file that combines
