@@ -1,7 +1,5 @@
 # s4cmd, by Chou-han Yang 
-
-# This is just a backup/copy of the original source files from
-# https://github.com/bloomreach/s4cmd.git
+# Remark: This is NOT my work. It is just a backup/copy of the original source files from https://github.com/bloomreach/s4cmd.git
 
 ### Super S3 command line tool
 
