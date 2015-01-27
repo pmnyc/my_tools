@@ -20,6 +20,7 @@ def runcommd(x):
         # print x
     # else:
         # print "FAILED " + x
+    process = 1
     try:
         process = subprocess.check_call(x,shell=True)
     except:
