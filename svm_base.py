@@ -1,4 +1,4 @@
-from __future__ import print_function
+"""This is NOT my work. It is put here simply because it is a nice example code forwriting Python codes using machine learning"""from __future__ import print_function
 
 import numpy as np
 import scipy.sparse as sp
