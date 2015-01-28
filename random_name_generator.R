@@ -1,8 +1,7 @@
 ######################################
 # Create a random ID Name of length 12
 # @author: pm
-######################################
-
+######################################
 mkRandomString <- function(len=12){
     n = 1;
     randomString <- c(1:n)  # initialize vector
