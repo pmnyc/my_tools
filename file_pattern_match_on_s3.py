@@ -100,8 +100,8 @@ class filePatternMatch(object):
             for i in range(len(files)):
                 if self.matchPatternInd(files[i], search_file_path_pattern, self.wildcard):
                     filelist.append("s3://" + files[i])
-                    id = self.getStructID(files[i], search_file_path_pattern, self.wildcard)
-                    id.append(id)
+                    id_ = self.getStructID(files[i], search_file_path_pattern, self.wildcard)
+                    id.append(id_)
                     
         self.filelist = filelist
         self.id = id
