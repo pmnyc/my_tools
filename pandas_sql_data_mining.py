@@ -10,7 +10,7 @@ import pandas as pd, numpy as np
 import pandas.io.sql as psql
 from sqlalchemy import create_engine
 
-engine = create_engine('mssql+pyodbc://myserver/ElectricLoadForecast')
+engine = create_engine('mssql+pyodbc://myserver/mydb')
 #engine = create_engine('mssql+pyodbc://server/database')
 #engine = create_engine('mssql+pyodbc://user:password@server/database')
 connStr = (
