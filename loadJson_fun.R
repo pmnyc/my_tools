@@ -1,5 +1,5 @@
 # Load JSON file in R
-# @author: pm
+# @author: pm #
 #sample usage:
 #   loadJson_fun("config.json")
 

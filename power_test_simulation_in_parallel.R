@@ -1,5 +1,5 @@
 # Simulation (5 million simulations) of Power Test by Comparing Six Different Groups in Parallel
-# @author: pm
+# @author: pm #
 
 library(parallel)
 ### Initial Parameters ###

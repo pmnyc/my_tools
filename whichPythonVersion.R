@@ -1,3 +1,5 @@
+# @author: pm #
+ 
 whichPython2use_Fun = function(
                             cmdpy_alter1 = "python2.7",
                             cmdpy_alter2 = "python2.6",
