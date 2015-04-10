@@ -92,13 +92,7 @@ alignPtShpWithPolyShp <- function(pointshape, polyshape,
     #rgdal::writeOGR(pointshape,getwd(),"mypt",driver="ESRI Shapefile",overwrite_layer=TRUE)
     varofElev_raw = pointPolyClip_varofElev(pointshape,polyshape,max_area_totake);
 
-    varofElev_byPointShpMove = function(pointshape,polyshape, max_area_totake, x_move, y_move){
-        pointshape@coords[,1] = pointshape@coords[,1] + x_move;
-        pointshape@coords[,2] = pointshape@coords[,2] + y_move;
-        pointshape@bbox[1,] = pointshape@bbox[1,] + x_move;
-        pointshape@bbox[2,] = pointshape@bbox[2,] + y_move;
-        return(pointPolyClip_varofElev(pointshape,polyshape,max_area_totake))
-    }
+    
 
     moveunit = 1;
     numsteps = 2 * buffer_distance;   #determine how many steps for each of x and y moves
