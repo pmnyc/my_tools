@@ -1,4 +1,9 @@
-alignPtShpWithPolyShp = function(pointshape,
+########################
+# @author: pm #
+# It aligns shape file with point shape files based on elevations
+########################
+
+alignPtShpWithPolyShp <- function(pointshape,
                                 pointshape_elev_fieldname="z",
                                 polyshape,
                                 polyshape_polygon_area_fieldname="SHAPE_AREA",
