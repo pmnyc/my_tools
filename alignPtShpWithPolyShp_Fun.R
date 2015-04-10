@@ -3,24 +3,22 @@
 ### It aligns shape file with point shape files based on elevations
 ########################
 
-alignPtShpWithPolyShp <- function(pointshape,
-                                polyshape,
+alignPtShpWithPolyShp <- function(pointshape, polyshape,
                                 polyshape_polygon_area_fieldname="SHAPE_AREA",
                                 pointshape_elev_fieldname="z",
                                 buffer_distance=5){
-
     # Assume the point shape file's size (in MB) is much bigger than polygon shape file
         # and the extent of point shape file is within that of polygon shape file
 
     # pointshape_elev_fieldname is the field name in the point shape file for the elevation
     # buffer_distance is used to buffer both point and polygon shape files
-    ##*** Sample Inputs ***##
+    #### Sample Inputs ####
     # pointshape = las_toPtShp_ss2;
     # polyshape = shpInput_ss1;
     # pointshape_elev_fieldname ="z";
     # polyshape_polygon_area_fieldname = "SHAPE_AREA";
     # buffer_distance =20;
-    ##***********************#
+    ###########################
 
     pointshape_raw = pointshape;
 
