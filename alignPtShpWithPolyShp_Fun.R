@@ -1,13 +1,14 @@
-##############
+########################
 # @author: pm #
 # It aligns shape file with point shape files based on elevations
-##############
+########################
 
 alignPtShpWithPolyShp = function(pointshape,
-                                pointshape_elev_fieldname ="z",
+                                pointshape_elev_fieldname="z",
                                 polyshape,
-                                polyshape_polygon_area_fieldname = "SHAPE_AREA",
-                                buffer_distance =5){
+                                polyshape_polygon_area_fieldname="SHAPE_AREA",
+                                buffer_distance=5){
+
     # Assume the point shape file's size (in MB) is much bigger than polygon shape file
         # and the extent of point shape file is within that of polygon shape file
 
