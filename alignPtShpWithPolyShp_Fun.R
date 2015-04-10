@@ -1,6 +1,6 @@
 ########################
-# @author: pm #
-# It aligns shape file with point shape files based on elevations
+### @author: pm #
+### It aligns shape file with point shape files based on elevations
 ########################
 
 alignPtShpWithPolyShp <- function(pointshape,
