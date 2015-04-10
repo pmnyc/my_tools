@@ -1,12 +1,12 @@
 ########################
-### @author: pm #
+### @author: pm
 ### It aligns shape file with point shape files based on elevations
 ########################
 
 alignPtShpWithPolyShp <- function(pointshape,
-                                pointshape_elev_fieldname="z",
                                 polyshape,
                                 polyshape_polygon_area_fieldname="SHAPE_AREA",
+                                pointshape_elev_fieldname="z",
                                 buffer_distance=5){
 
     # Assume the point shape file's size (in MB) is much bigger than polygon shape file
@@ -173,5 +173,6 @@ alignPtShpWithPolyShp <- function(pointshape,
     print(paste('The Best Move is: x, ',toString(bestmove[1]),'; y, ',toString(bestmove[2]), sep=""));
     return(movePointShape(pointshape=pointshape_raw, x_move=bestmove[1], y_move=bestmove[2]))
     # The result is the best match by adding bestmove[1] to x-coordinate of point shape file, bestmove[2] to y-coordinate
-};
+}
 
+print '';
