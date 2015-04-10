@@ -7,7 +7,7 @@ alignPtShpWithPolyShp <- function(pointshape, polyshape,
                                 polyshape_polygon_area_fieldname="SHAPE_AREA",
                                 pointshape_elev_fieldname="z",
                                 buffer_distance=5){
-    # Assume the point shape file's size (in MB) is much bigger than polygon shape file
+    # Assume the point shape file size (in MB) is much bigger than polygon shape file
         # and the extent of point shape file is within that of polygon shape file
 
     # pointshape_elev_fieldname is the field name in the point shape file for the elevation
@@ -81,7 +81,7 @@ alignPtShpWithPolyShp <- function(pointshape, polyshape,
 
         #df1 = merge(aggregate(z ~ STRUCT_ID, data = pt_clip, min, na.rm=TRUE),
         #            aggregate(SHAPE_AREA ~ STRUCT_ID, data = pt_clip, mean, na.rm=TRUE),by="STRUCT_ID");
-        #var = sum(df1$z * (df1$SHAPE_AREA + 1e-5)) / sum(df1$SHAPE_AREA + 1e-5);
+        #var = sum(df1$z  (times) (df1$SHAPE_AREA + 1e-5)) / sum(df1$SHAPE_AREA + 1e-5);
         var = sum(df5$z) - sum(df6$z);
                 #smaller var is more preferable
         return(var)
