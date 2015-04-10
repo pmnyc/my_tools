@@ -104,37 +104,5 @@ alignPtShpWithPolyShp <- function(pointshape, polyshape,
     numsteps = 2 * buffer_distance;   #determine how many steps for each of x and y moves
     bestmove = c(0,0)
 
-    getBestMove = function(moveunit,numsteps,bestmove){
-        x_step = moveunit;
-        y_step = moveunit;
 
-        x_range = c(bestmove[1]-0.5 * numsteps * moveunit,bestmove[1]+0.5 * numsteps * moveunit);
-        y_range = c(bestmove[2]-0.5 * numsteps * moveunit,bestmove[2]+0.5 * numsteps * moveunit);
-
-        step_matrix = matrix(nrow=numsteps**2,ncol=2);
-        for (i in seq(numsteps)){
-            for (j in seq(numsteps)){
-                step_matrix[(i-1)*numsteps+j,] = c(i,j)
-            }
-        }
-
-        best_varofelev = 1e10;
-        bestmove = c(0,0);
-        xsteps = seq(x_range[1],x_range[2],by=moveunit);
-        ysteps = seq(y_range[1],y_range[2],by=moveunit);
-
-        for (i in seq(nrow(step_matrix))){
-            x_move = xsteps[step_matrix[i,1]];
-            y_move = ysteps[step_matrix[i,2]];
-            var_of_elev = varofElev_byPointShpMove(pointshape,polyshape, max_area_totake, x_move, y_move);
-            if (var_of_elev < best_varofelev){
-                bestmove = c(x_move,y_move);
-                best_varofelev = var_of_elev;
-            }
-        }
-
-        return(list(bestmove=bestmove,best_varofelev=best_varofelev))
-    }
-
-    firstTest = getBestMove(moveunit,numsteps,bestmove);
 }
