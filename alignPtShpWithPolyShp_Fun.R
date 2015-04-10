@@ -9,7 +9,6 @@ alignPtShpWithPolyShp <- function(pointshape, polyshape,
                                 buffer_distance=5){
     # Assume the point shape file size (in MB) is much bigger than polygon shape file
         # and the extent of point shape file is within that of polygon shape file
-
     # pointshape_elev_fieldname is the field name in the point shape file for the elevation
     # buffer_distance is used to buffer both point and polygon shape files
     #### Sample Inputs ####
