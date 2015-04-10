@@ -137,7 +137,4 @@ alignPtShpWithPolyShp <- function(pointshape, polyshape,
     }
 
     firstTest = getBestMove(moveunit,numsteps,bestmove);
-
- 
-
 }
