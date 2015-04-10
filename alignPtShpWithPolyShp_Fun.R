@@ -81,7 +81,7 @@ alignPtShpWithPolyShp <- function(pointshape, polyshape,
 
         #df1 = merge(aggregate(z ~ STRUCT_ID, data = pt_clip, min, na.rm=TRUE),
         #            aggregate(SHAPE_AREA ~ STRUCT_ID, data = pt_clip, mean, na.rm=TRUE),by="STRUCT_ID");
-        #var = sum(df1$z  (times) (df1$SHAPE_AREA + 1e-5)) / sum(df1$SHAPE_AREA + 1e-5);
+        #var = sum(df1$z * (df1$SHAPE_AREA + 1e-5)) / sum(df1$SHAPE_AREA + 1e-5);
         var = sum(df5$z) - sum(df6$z);
                 #smaller var is more preferable
         return(var)

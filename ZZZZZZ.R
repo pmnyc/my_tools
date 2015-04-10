@@ -75,4 +75,16 @@ alignPtShpWithPolyShp <- function(pointshape, polyshape,
         df3$cut1 = (df3$z_mean - df3$z_min)/3.0;
         df3 = transform(df3, low_cutoff = pmin(dummy, cut1));
 
+        df4 = merge(pt_clip, df3, by="STRUCT_ID");
+        df5 = df4[df4$z <= (df4$z_min + df4$low_cutoff),]; # find the points that are far below the average height within polygon region
+        df6 = df4[df4$z > (df4$z_min + df4$low_cutoff),]; #the points that are beyond the threshold
+
+        #df1 = merge(aggregate(z ~ STRUCT_ID, data = pt_clip, min, na.rm=TRUE),
+        #            aggregate(SHAPE_AREA ~ STRUCT_ID, data = pt_clip, mean, na.rm=TRUE),by="STRUCT_ID");
+        #var = sum(df1$z  (times) (df1$SHAPE_AREA + 1e-5)) / sum(df1$SHAPE_AREA + 1e-5);
+        var = sum(df5$z) - sum(df6$z);
+                #smaller var is more preferable
+        return(var)
+    }
+
 }
