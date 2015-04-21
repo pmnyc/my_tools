@@ -16,6 +16,19 @@ one needs to set yarn-client as master.
 
 In the code, set 3 X # of cores in the slave nodes as # of slices/partitions.
 --master local[#cores] is only to let it run on master node in standalone mode.
+
+Launch EMR Spark Cluster
+aws emr create-cluster \
+    --no-auto-terminate \
+    --name MySparkCluster \
+    --ami-version 3.6.0 \
+    --instance-type m3.xlarge \
+    --instance-count 3 \
+    --use-default-roles \
+    --ec2-attributes KeyName=emrspark,SubnetId=subnet-aabbccdd \
+    --applications Name=Hive \
+    --bootstrap-actions Path=s3://support.elasticmapreduce/spark/install-spark Path=s3://mybucket/sparkconfig.sh
+
 """
 
 import get_list_of_ids_ons3
