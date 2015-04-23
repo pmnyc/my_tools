@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-@author: man peng
+@author: pm
 
 This program is to get the list of IDs processed and
     the IDs in full list folder so that we can get
