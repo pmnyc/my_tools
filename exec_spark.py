@@ -33,7 +33,8 @@ aws emr create-cluster \
     --ec2-attributes KeyName=emrspark,SubnetId=subnet-aabbccdd \
     --applications Name=Hive \
     --bootstrap-actions Path=s3://support.elasticmapreduce/spark/install-spark Path=s3://mybucket/sparkconfig.sh
-
+To terminate the cluster, use
+aws emr terminate-clusters --cluster-ids j-2TMMDJA8I3KKU , where one may list ids one by one
 """
 
 import get_list_of_ids_ons3
@@ -69,6 +70,11 @@ def runID(id, reslt_search_pattern , usage_search_pattern , customer_data, s3_ou
             print "Unexpected error:", sys.exc_info()[0]
             #raise
         return count
+
+def fhash(x): #this is to create hash value (md5 value to be precise) for a string
+    hash_object = hashlib.md5(str(x))
+    hex_dig = hash_object.hexdigest()
+    return hex_dig
 
 if __name__ == '__main__':
     ####### Parameters #########
@@ -124,7 +130,7 @@ if __name__ == '__main__':
     rdd = distList.map(lambda x: runID(id=int(x), reslt_search_pattern = reslt_search_pattern,
                     usage_search_pattern = usage_search_pattern,
                     customer_data = customer_data, s3_output = s3_output,
-                    s3_key_info = s3_key_info, temp_bucket_suffix = "zzzzz9xzufdj"))
+                    s3_key_info = s3_key_info, temp_bucket_suffix = "zz"))
     rdd.cache()
     totalcount = rdd.reduce(add)
     sc.stop()
