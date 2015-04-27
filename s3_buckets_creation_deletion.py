@@ -128,7 +128,7 @@ def copyS3Files(s3_key_info, from_search_pattern, struct_id, to_bucket, includef
 
 def uploadFile2s3(fileup, s3_output, s3_key_info):
     # sample input
-    #s3_output = 's3://ngrid.manpeng/coffee/financial.output.temp/'
+    #s3_output = 's3://mybucket/myfolder/'
     #fileup = 'zzzzz.py'
     #####
     def addSlash(x):
