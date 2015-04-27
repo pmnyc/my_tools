@@ -109,7 +109,7 @@ if __name__ == '__main__':
     #conf.set("spark.scheduler.revive.interval", 99999999999)
     #slave_memory = "4g" #set memory of slave node to be 4GB
     #conf.set("spark.executor.memory", slave_memory)
-    conf.set("spark.scheduler.mode", "FAIR") #default is FIFO
+    #conf.set("spark.scheduler.mode", "FAIR") #default is FIFO
     sc = SparkContext(conf=conf)
 
     files_to_add_pattern = ['*.py', '*.txt', '*.json', '*.csv']
