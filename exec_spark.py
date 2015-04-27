@@ -25,6 +25,7 @@ Launch EMR Spark Cluster
 aws emr create-cluster \
     --no-auto-terminate \
     --name MySparkCluster \
+    --tags "Name=MyInstanceName" \
     --ami-version 3.7.0 \
     --instance-type m3.xlarge \
     --instance-count 3 \
