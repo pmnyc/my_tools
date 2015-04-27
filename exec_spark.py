@@ -9,6 +9,10 @@ Sample Usage:
     --num-executors 12 \
     --executor-cores 1 \
     ./exec_spark.py
+    
+Use --num-executors --executor-cores so that their product is total # of cores on slave nodes
+    for larger instances in slave nodes, use 2+ as --executor-cores
+    use --executor-memory 2G (or whatever size you want for each executor)
 
 , where --executor-cores needs to be 1 for defining a core for each executor,
 and --num-executors can be the total number of cores in the cluster. To use pyspark,
@@ -21,7 +25,7 @@ Launch EMR Spark Cluster
 aws emr create-cluster \
     --no-auto-terminate \
     --name MySparkCluster \
-    --ami-version 3.6.0 \
+    --ami-version 3.7.0 \
     --instance-type m3.xlarge \
     --instance-count 3 \
     --use-default-roles \
@@ -98,9 +102,10 @@ if __name__ == '__main__':
     #conf.set("spark.scheduler.revive.interval", 99999999999)
     #slave_memory = "4g" #set memory of slave node to be 4GB
     #conf.set("spark.executor.memory", slave_memory)
+    conf.set("spark.scheduler.mode", "FAIR") #default is FIFO
     sc = SparkContext(conf=conf)
 
-    files_to_add_pattern = ['*.py', '*.pyc', '*.txt', '*.json', '*.csv']
+    files_to_add_pattern = ['*.py', '*.txt', '*.json', '*.csv']
     pyfiles_list = []
     for i in range(len(files_to_add_pattern)):
         pyfiles_list += FilesMatchPattern(files_to_add_pattern[i])
@@ -110,7 +115,11 @@ if __name__ == '__main__':
 
     slices = 3 * n_cores
     slices = min(slices, len(ids))  #This is just set upper limit of the number of slices to total length of ids
-    distList = sc.parallelize(ids, slices)
+    if slices > 0:
+        distList = sc.parallelize(ids, slices)
+    else:
+        distList = sc.parallelize(ids)
+
     rdd = distList.map(lambda x: runID(id=int(x), reslt_search_pattern = reslt_search_pattern,
                     usage_search_pattern = usage_search_pattern,
                     customer_data = customer_data, s3_output = s3_output,
@@ -118,4 +127,4 @@ if __name__ == '__main__':
     rdd.cache()
     totalcount = rdd.reduce(add)
     sc.stop()
-    print "Total of " + str(totalcount) + "IDs are processed"
+    print "Total of " + str(totalcount) + " IDs are processed"
