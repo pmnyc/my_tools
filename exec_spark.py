@@ -3,23 +3,23 @@
 
 This program is to execute the spark on the program.
 
+----------------------------------------
 Sample Usage:
 ~/spark/bin/spark-submit \
     --master yarn-client \
     --num-executors 12 \
     --executor-cores 1 \
+    --executor-memory 2G \
     ./exec_spark.py
-    
+
 Use --num-executors --executor-cores so that their product is total # of cores on slave nodes
     for larger instances in slave nodes, use 2+ as --executor-cores
-    use --executor-memory 2G (or whatever size you want for each executor)
-
-, where --executor-cores needs to be 1 for defining a core for each executor,
-and --num-executors can be the total number of cores in the cluster. To use pyspark,
-one needs to set yarn-client as master.
+    --num-executors X --executor-cores should be the total number of cores in the cluster.
+    To use pyspark, one needs to set yarn-client as master.
 
 In the code, set 3 X # of cores in the slave nodes as # of slices/partitions.
---master local[#cores] is only to let it run on master node in standalone mode.
+    --master local[#cores] is only to let it run on master node in standalone mode.
+----------------------------------------
 
 Launch EMR Spark Cluster
 aws emr create-cluster \
@@ -33,6 +33,23 @@ aws emr create-cluster \
     --ec2-attributes KeyName=emrspark,SubnetId=subnet-aabbccdd \
     --applications Name=Hive \
     --bootstrap-actions Path=s3://support.elasticmapreduce/spark/install-spark Path=s3://mybucket/sparkconfig.sh
+    --steps Name=sparktest,Jar=s3://elasticmapreduce/libs/script-runner/script-runner.jar,Args=s3://mybucket/exec_spark_code
+where,
+    1)  sparkconfig.sh is bash script that can be 'sudo yum update -y', etc, the normal Linux installation script
+    2)  the exec_spark_code file in Args of --steps option lets us run python script to execute program on master node in the cluster
+        For example, exec_spark_code file's content can be
+        #!/usr/bin/python
+        # Small script to start Spark Cluster Computing
+        import os , subprocess , sys
+        home_dir = "/home/hadoop/nrel"
+        scpt = "mkdir -p " + home_dir + " ; "
+        scpt += "cd " + home_dir + " ; "
+        scpt += "aws s3 cp s3://ngrid.manpeng/codes.rpm ./ ; "
+        scpt += "mv codes.rpm codes.zip ; unzip codes.zip ; chmod 644 * ; "
+        scpt += "bash start_spark.sh ; "
+        subprocess.call(scpt, shell=True)
+----------------------------------------
+
 To terminate the cluster, use
 aws emr terminate-clusters --cluster-ids j-2TMMDJA8I3KKU , where one may list ids one by one
 """
