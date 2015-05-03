@@ -36,7 +36,9 @@ aws emr create-cluster \
     --steps Name=sparktest,Jar=s3://elasticmapreduce/libs/script-runner/script-runner.jar,Args=s3://mybucket/exec_spark_code
 where,
     1)  sparkconfig.sh is bash script that can be 'sudo yum update -y', etc, the normal Linux installation script
-    2)  the exec_spark_code file in Args of --steps option lets us run python script to execute program on master node in the cluster
+    2)  Use following to configure different instance type for master and slave nodes
+        --instance-groups InstanceGroupType=MASTER,InstanceCount=1,InstanceType=m3.xlarge InstanceGroupType=CORE,InstanceCount=2,InstanceType=c3.8xlarge
+    3)  the exec_spark_code file in Args of --steps option lets us run python script to execute program on master node in the cluster
         For example, exec_spark_code file's content can be
         #!/usr/bin/python
         # Small script to start Spark Cluster Computing
