@@ -6,6 +6,7 @@ This program is to introduce pandas dataframe manipulation, pandas interaction w
 """
 
 import pyodbc
+import copy
 import pandas as pd, numpy as np
 import pandas.io.sql as psql
 from sqlalchemy import create_engine
@@ -98,4 +99,9 @@ df.loc[df['keyvar'] < 0,['flag']] = 1
 df['bill'] = df.loc[:,['a','b']].sum(axis = 1)
 df.loc[~(df['control'].notnull()),['var3']]=0
 df.loc[pdindx_intercept(idx_cd_case1,idx_cd_case2),['var4']] = 3.1415 * df['var2'][pdindx_intercept(idx_cd_case1,idx_cd_case2)]
+
+df1 = copy.copy(df)
+df2 = copy.copy(df)
+df3 = pd.concat([df1, df2], axis=1) # This is to combine two data frames with same index by putting two columns
+                                    # side by side
 ######################################################################
