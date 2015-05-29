@@ -104,4 +104,3 @@ df1 = copy.copy(df)
 df2 = copy.copy(df)
 df3 = pd.concat([df1, df2], axis=1) # This is to combine two data frames with same index by putting two columns
                                     # side by side
-######################################################################
