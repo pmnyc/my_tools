@@ -7,6 +7,7 @@ This program is to introduce pandas dataframe manipulation, pandas interaction w
 
 import pyodbc
 import copy
+import os, fnmatch
 import pandas as pd, numpy as np
 import pandas.io.sql as psql
 from sqlalchemy import create_engine
@@ -87,6 +88,24 @@ def pdindx_union(*argv):
             else:
                 out = out | np.array(argv[i])
         return out.tolist()
+
+def deleteFiles(pattern, path=None): # This is to delete all files of the same pattern
+    #sample pattern = "*.pyc"
+    #sample usage: deleteFiles(pattern="*.pyc")  # This is to delete all files with extension .pyc
+    if path==None:
+        cwd = os.getcwd()
+    else:
+        cwd = path
+    filelist = os.listdir(cwd)
+    pattn = pattern.lower()
+    files = filter(lambda x: fnmatch.fnmatch(x.lower(),pattn), filelist)
+    if len(files) >=1 :
+        for i in range(len(files)):
+            os.remove(files[i])
+    print "Files deleted are \n" + (" " * 6) + ", ".join(files)
+
+
+###  Data Manipulation  ###
 
 idx_cd_case1 = ([int(x) in [102,292] for x in df['var1']])
 idx_cd_case2 = ([int(x) in [710, 911] for x in df['var1']])
