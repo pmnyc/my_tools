@@ -2,6 +2,7 @@
  
  """
  This is for automated installation of anaconda or pip python packages
+ It only works in Unix/Linux/Mac OS
 
  This might cause problems, be cautious!!!!
 
@@ -14,14 +15,16 @@ import pip
 
 pip_install_ind = True
 s = subprocess.call("sudo conda update --all",shell=True)
-if s != 0:
+if s == 0:
     pip_install_ind = False
 
 if pip_install_ind:
     dists = []
     for dist in pip.get_installed_distributions():
         dists.append(dist.project_name)
-     
+
+    dists = filter(lambda t: t.lower() != 'pip', dists)
+
     for dist_name in sorted(dists, key=lambda s: s.lower()):
         cmd = "sudo pip install {0} -U".format(dist_name)
         print '#', cmd
