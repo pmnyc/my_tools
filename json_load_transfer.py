@@ -66,3 +66,32 @@ def transferJsonInfo(fromjson, tojson):
         for keys, items in fromdata.items():
             feeds[keys] = items
         json.dump(feeds, feedsjson, indent=4)
+
+def loadDF2Json(dataframe, tojson_filename):
+    """
+    This function is to list rows of dataframe in a list, each record is a dictionary
+    with key being the column names
+    """
+    # Sample Input
+    # dataframe is a pandas dataframe
+    # tojson_filename = 'myout.json'
+    dictjson = dataframe.to_dict(orient ='‘records’') #orient : str {‘dict’, ‘list’, ‘series’, ‘split’, ‘records’}
+    with open(tojson_filename, mode='w') as feedsjson:
+        json.dump(dictjson, feedsjson, indent=4)
+
+def loadJsontoDataframe(jsonfile, export_to_csv_ind = False):
+    """
+    This function transforms list of dicitonaries to data frame
+    Here, the list of dictionaries was created from the dataframe transformation into dict with orient="records"
+    See the loadDF2Json function above
+    """
+    # Sample Input
+    # jsonfile = 'myout.json'
+    out_csv_filename = jsonfile[:-4] + 'csv'
+    out_csv_filename = out_csv_filename.replace('..csv','.csv')
+    jsoninfo = loadJson(jsonfile)
+    df = pd.DataFrame(jsoninfo)
+    if export_to_csv_ind:
+        df.to_csv(out_csv_filename,index=False)
+    else:
+        return df
