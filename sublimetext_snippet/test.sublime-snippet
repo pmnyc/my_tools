@@ -1,0 +1,13 @@
+<snippet>
+    <!-- The user defined snippet is usually stored in -->
+    <!--C:\Users\myaccount\AppData\Roaming\Sublime Text 3\Packages\User\ -->
+    <content><![CDATA[
+
+import test
+
+]]></content>
+    <!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
+    <tabTrigger>test</tabTrigger>
+    <!-- Optional: Set a scope to limit where the snippet will trigger -->
+    <scope>source.python</scope>
+</snippet>
