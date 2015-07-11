@@ -4,6 +4,11 @@
     <content><![CDATA[
 
 import test
+try:
+    ${1:code1}
+except Exception as e:
+    ${2:code2}
+    print(${1:code1})
 
 ]]></content>
     <!-- Optional: Set a tabTrigger to define how to trigger the snippet -->
