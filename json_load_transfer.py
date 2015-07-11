@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Load Simple JSON configuration
 @author: pm
@@ -21,7 +20,6 @@ Example: JSON file is config.json
 "om_points":"value",
 "par3": 1
 }
-
 
 Next program is to load one Json info into another Json file
     Remark: Both from and to json files already exist
