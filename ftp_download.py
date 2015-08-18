@@ -133,9 +133,9 @@ def parallelDownload(ftp_path, userName=None, passWord=None,
             newpath = os.path.join(ftpobj.localDir,f)
             # This uses a recursive method for downloading subfolders
             ftp_path2 = addSlash(os.path.join(ftp_path,f))
-            parallelDownload(ftp_path2, userName=None, passWord=None,
-                    localDir=newpath, deleteRemoteFiles=False,
-                    onlyDiff=True)
+            parallelDownload(ftp_path2, userName=userName, passWord=passWord,
+                    localDir=newpath, deleteRemoteFiles=deleteRemoteFiles,
+                    onlyDiff=onlyDiff)
     print "There are " + str(filesMoved) + " files are downloaded on " + ftpobj.timeStamp()
     #pool = Pool(processes=ncores)
     #pool.map(par_down, ftpobj.transferList)
