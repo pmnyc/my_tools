@@ -113,6 +113,7 @@ idx_cd_case2 = ([int(x) in [710, 911] for x in df['var1']])
 tmp = df.loc[idx_cd_case1,:]
 df.loc[idx_cd_case1,['var2']] = tmp['var22'] + tmp['var23']
 df.loc[idx_cd_case1,['var2']] = tmp['var22'] + tmp['var23']
+index_max = df['var1'].argmax() # This is to find index with highest var1 value
 tmp = df.loc[idx_cd_case1,:]
 df.loc[df['keyvar'] < 0,['flag']] = 1
 df['bill'] = df.loc[:,['a','b']].sum(axis = 1)
