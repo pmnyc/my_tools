@@ -15,13 +15,13 @@ Sample Usage:
 """
 
 import os, time
-#import copy
 from ftplib import FTP
 from multiprocessing import cpu_count
-#from multiprocessing import pool
-#from functools import partial
-#from itertools import repeat
-#import ftplib
+
+# from multiprocessing import pool
+# from functools import partial
+# from itertools import repeat
+# import ftplib
 
 class syncFTP(object):
     """ This is for syncing content from ftp to local directory"""
@@ -35,6 +35,11 @@ class syncFTP(object):
         self.deleteRemoteFiles = deleteRemoteFiles
         self.onlyDiff = onlyDiff
         self.ftp_connection_count = 0
+        # if self.localDir does not exist, then create a folder
+        if self.localDir == None:
+            self.localDir = os.getcwd()
+        if not(os.path.isdir(self.localDir)):
+            os.mkdir(os.path.join(self.localDir))
 
     @staticmethod
     def timeStamp():
