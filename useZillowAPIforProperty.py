@@ -269,10 +269,15 @@ def parseDeepSearch(xmlfile):
     # xmlfile = '2114BigelowAveSeattleWA_deepsearch.xml'
     with open(xmlfile) as fd:
         xmlobj = xmltodict.parse(fd.read())
-    xmlinfo = dict(dict(xmlobj['SearchResults:searchresults'])['response'])
+    def getinSingleDict(dic):
+        if len(dic.keys()) == 1:
+            return dic[dic.keys()[0]]
+        else:
+            return dic
+    xmlinfo = getinSingleDict(getinSingleDict(getinSingleDict(xmlobj)['response']))
     for i in range(10):
         if len(xmlinfo.keys())==1:
-            xmlinfo = xmlinfo[xmlinfo.keys()[0]]
+            xmlinfo = getinSingleDict(xmlinfo)
         else:
             break
     finaldict = dict(copy.copy(xmlinfo))
@@ -284,20 +289,34 @@ def parseDeepSearch(xmlfile):
             del finaldict[key]
         else:
             continue
-
-    finaldict['lastSoldPrice'] = '$' + xmlinfo['lastSoldPrice']['#text']
+    try:
+        finaldict['lastSoldPrice'] = '$' + xmlinfo['lastSoldPrice']['#text']
+    except KeyError:
+        pass
     ## add address info ##
-    for key in xmlinfo['address'].keys():
-        if key in finaldict.keys():
-            continue
-        else:
-            finaldict[key] = xmlinfo['address'][key]
+    try:
+        for key in xmlinfo['address'].keys():
+            if key in finaldict.keys():
+                continue
+            else:
+                finaldict[key] = xmlinfo['address'][key]
+    except:
+        pass
     ## add zestmate info ##
-    x = xmlinfo['zestimate']
-    finaldict['zestimate_last-updated'] = x['last-updated']
-    finaldict['zestimate_amount'] = '$' + x['amount']['#text']
+    try:
+        x = xmlinfo['zestimate']
+        finaldict['zestimate_last-updated'] = x['last-updated']
+    except:
+        pass
+    try:
+        finaldict['zestimate_amount'] = '$' + x['amount']['#text']
+    except:
+        pass
     ## add localRestate info ##
-    finaldict['neighborhood'] = xmlinfo['localRealEstate']['region']['@name']
+    try:
+        finaldict['neighborhood'] = xmlinfo['localRealEstate']['region']['@name']
+    except:
+        pass
     return finaldict
 
 ## parse the deep comparable xml files ##
