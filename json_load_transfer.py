@@ -93,3 +93,21 @@ def loadJsontoDataframe(jsonfile, export_to_csv_ind = False):
         df.to_csv(out_csv_filename,index=False)
     else:
         return df
+
+def loaddict2jsonfile(dic, tojson_filename):
+    """
+    This function loads a dic into tojson_filename file
+    loaddict2jsonfile(my_dictionary, 'myjson.json')
+    """
+    with open(tojson_filename, mode='w') as feedsjson:
+      json.dump(dic, feedsjson, indent=4)
+
+def merge2json(json_file1, json_file2, outputfile):
+    f1 = loadJson(json_file1)
+    f2 = loadJson(json_file2)
+    for k in f2.keys():
+        if k in f1.keys():
+            continue
+        else:
+            f1[k] = f2[k]
+    loaddict2jsonfile(f1,outputfile)
