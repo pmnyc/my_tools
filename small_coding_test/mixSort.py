@@ -9,6 +9,7 @@ Lessons:
     back
 2) string.sort() replaces string directly, a=b.sort() IS INVALID !!!
 3) list(string) is to separate the strings into list for better manipulation.
+4) list.sort() puts capital letters in front of lower case, to rank lower case in front of capital letters, use  list.sort(key=lambda v: v.upper())
 """
 class Solution:
     def orderXbytype(x):
