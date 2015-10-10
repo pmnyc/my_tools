@@ -1,4 +1,6 @@
 """
+Mix Sort
+
 Question: Given a string "eacxzqa02b721", give the output that orders the letters and numbers separated
     at the positions of this string originally for letter or number.
 
