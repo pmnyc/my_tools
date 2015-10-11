@@ -11,8 +11,8 @@ Lessons:
 3) list(string) is to separate the strings into list for better manipulation.
 4) list.sort() puts capital letters in front of lower case, to rank lower case in front of capital letters, use  list.sort(key=lambda v: v.upper())
 """
-class Solution:
-    def orderXbytype(x):
+class Solution(object):
+    def orderXbytype(self, x):
         letters_idx = filter(lambda i: x[i].isalpha(), range(len(x)))
         num_idx = filter(lambda i: x[i].isdigit(), range(len(x)))
         space_idx = filter(lambda i: x[i].isspace(), range(len(x)))
