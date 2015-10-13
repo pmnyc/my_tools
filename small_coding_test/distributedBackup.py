@@ -26,7 +26,6 @@ output:
 
 Lessons:
 1) Even in class, the staticmethod defined still needs self.method to call it.
-
 """
 
 import os
@@ -71,3 +70,48 @@ if __name__ == '__main__':
             "1 2"]
     Solution().getAllRawData(data)
     print("done")
+
+
+########## Solution #2 #######
+
+def alldatavalues(data):
+    alldata = map(lambda x: x.split(" ")[1:], data)
+    for i in range(len(alldata)):
+        if i == 0:
+            row = alldata[i]
+        else:
+            row += alldata[i]
+        row = list(set(row))
+    return row
+
+
+def getrowvalues(data, centerid):
+    # row = "5 1 3"
+    row = data[centerid-1]
+    return row.split(" ")[1:]
+
+
+alldatavalues_ = alldatavalues(data)
+center_ids_ = range(1,len(data)+1)
+datamaptocenter={}
+
+for datavalue in alldatavalues(data):
+    datamaptocenter[datavalue] = []
+    for centerid in center_ids_:
+        if datavalue in getrowvalues(data, centerid):
+            datamaptocenter[datavalue] += [centerid]
+
+center_missingdata={}
+for centerid in center_ids_:
+    row = list(np.setdiff1d(alldatavalues_, getrowvalues(data, centerid)))
+    center_missingdata[centerid] = row
+
+#center_missingdata
+#datamaptocenter
+for centerid in center_ids_:
+    dataneeded = center_missingdata[centerid]
+    for data_ in dataneeded:
+        centerfrom = datamaptocenter[data_][0]
+        centerto = centerid
+        print("%s: %s --> %s" %(str(data_), str(centerfrom),str(centerto)))
+print("done")

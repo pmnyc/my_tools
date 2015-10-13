@@ -21,6 +21,20 @@ import os, sys
 import numpy as np
 
 
+class Solution(object):
+    def isHappyNum(self, n):
+        if self.sumsqure(n) == 1:
+            return True
+        else:
+            return False
 
+    def sumsqure(self, n):
+        # sum_ is the starting point, say sum_=10000
+        digits = map(lambda x: int(x), list(str(n)))
+        sum_ = sum(map(lambda x: x**2, digits))
+        if sum_ >= 10:
+            sum_ = self.sumsqure(sum_)
+        return sum_
 
 n = 19
+Solution().isHappyNum(n)
