@@ -7,6 +7,7 @@ Given a string S, find the longest palindromic substring in S.
 
 def isPalingdrom(x):
     # x = "abba"
+    x = x.replace(" ","")
     len_ = len(x)
     if len_ <=1:
         res = False
