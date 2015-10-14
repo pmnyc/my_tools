@@ -23,20 +23,29 @@ def isAlloneMatrix(matrix):
     else:
         return (sum(matrix_flat), True)
 
+def choose2fromn(n):
+    queue= []
+    for i in range(n-1):
+        for j in range(i+1,n):
+            queue.append([i,j])
+    return queue
+
 def getMaxMatrix(matrix):
     nrow, ncol = np.array(matrix).shape
-    index = []
-    for i in range(nrow):
-        for j in range(ncol):
-            index.append([i,j])
-    idx = range(len(index))
-    total_length = len(index)
+    row_queue = choose2fromn(nrow)
+    col_queue = choose2fromn(ncol)
     
-
-
-
-
-
+    max_area = 0
+    max_rowcol = []
+    for row in row_queue:
+        rows = matrix[row[0]:row[1]+1]
+        for col in col_queue:
+            sub_matrix = map(lambda x: x[col[0]:col[1]+1], rows)
+            res = isAlloneMatrix(sub_matrix)
+            if res[1] and res[0]>max_area:
+                max_area = res[0]
+                max_rowcol= [row, col]
+    return max_area, max_rowcol
 
 
 matrix = [[0,0,1,0,0],
@@ -46,7 +55,7 @@ matrix = [[0,0,1,0,0],
     [1,1,1,0,1],
     [0,1,1,1,1]]
 
-
+getMaxMatrix(matrix)
 
 ### Solution #2
 class Solution:
