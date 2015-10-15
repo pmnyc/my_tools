@@ -28,11 +28,11 @@ def pascalTriagle(n, memorization={}, res=[]):
         res = [[1],[1,1]]
         memorization[n] = res
     else:
-        curr_queue = [1]
         if memorization.has_key(n-1):
             prev = memorization[n-1]
         else:
             prev = pascalTriagle(n-1,memorization, res)
+        curr_queue = [1]
         for ii in range(len(prev[-1])-1):
             curr_queue += [prev[-1][ii] + prev[-1][ii+1]]
         curr_queue += [1]
