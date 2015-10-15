@@ -27,19 +27,17 @@ Answer: 3
 
 def neibors(x, nrow, ncol):
     # x=[0,1]
-    rows = range(nrow)
-    cols = range(ncol)
     res = []
-    if x[1]-1 in cols:
+    if x[1]-1 >=0:
         left_ = [x[0],x[1]-1]
         res += [left_]
-    if x[1]+1 in cols:
+    if x[1]+1 <= ncol-1:
         right_ = [x[0],x[1]+1]
         res += [right_]
-    if x[0]-1 in rows:
+    if x[0]-1 >=0:
         up_ = [x[0]-1, x[1]]
         res += [up_]
-    if x[0]+1 in rows:
+    if x[0]+1 <= nrow-1:
         down_ = [x[0]+1, x[1]]
         res += [down_]
     return res
@@ -54,24 +52,26 @@ def findIsland(x, islands, nrow, ncol):
             if x in islands[k] or len(filter(lambda x: x in islands[k],neibors(x,nrow,ncol))) >0:
                 return k
 
-land_index = []
-isolated_lands =[]
-islands={}
-nrow = len(g)
-ncol = len(g[0])
 
-for i in range(nrow):
-    for j in range(ncol):
-        if g[i][j] == '1':
-            land_index += [[i,j]]
-            nebors_ = neibors([i,j],nrow,ncol)
-            counter = 0
-            for nei in nebors_:
-                if g[nei[0]][nei[1]] == '1':
-                    counter += 1
-            if counter == 0:
-                isolated_lands += [[i,j]]
+class Solution(object):
+    def getIslands(self, g):
+        land_index = []
+        islands={}
+        nrow = len(g)
+        ncol = len(g[0])
 
+        for i in range(nrow):
+            for j in range(ncol):
+                if g[i][j] == '1':
+                    land_index += [[i,j]]
+                    key = findIsland([i,j], islands, nrow, ncol)
+                    if key == None:
+                        islands[str([i,j])] = [[i,j]]
+                    else:
+                        islands[key] += [[i,j]]
+
+        print("There are %s islands, and they are %s" %(str(len(islands.keys())), str(islands)))
+        return len(islands.keys()), islands
 
 
 g = [
@@ -81,3 +81,4 @@ g = [
     list('00011')
 ]
 
+Solution().getIslands(g)
