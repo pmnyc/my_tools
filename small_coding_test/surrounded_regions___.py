@@ -25,10 +25,9 @@ board = [
 
 
 
-
-
 nrow = len(board)
 ncol = len(board[0])
+
 
 
 
