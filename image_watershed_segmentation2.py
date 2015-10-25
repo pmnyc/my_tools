@@ -140,7 +140,7 @@ def roofSegmentation(imagefile,
     area_sum = 0
     for label in area_dic.keys():
         center = labelCenter(label, labels)
-        ax.text(center[1], center[0], str(int(np.ceil(area_dic[label]))), style='italic',
+        ax.text(center[1], center[0], str(int(np.ceil(area_dic[label]))), style='italic', fontsize=13,
             bbox={'facecolor':'white', 'alpha':0.5, 'pad':10})
         area_sum += area_dic[label]
     fig.savefig(output_image_file)
