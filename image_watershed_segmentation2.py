@@ -127,7 +127,7 @@ def roofSegmentation(imagefile,
         cnt = counts[i]
         area = cnt * pixel_size / np.cos(np.pi * slope /180.0)
         if area >= mini_area_threshould:
-            area_dic[label] = cnt * pixel_size
+            area_dic[label] = cnt * pixel_size / np.cos(np.pi * slope /180.0)
 
     # create plots
     fig, ax = plt.subplots()
