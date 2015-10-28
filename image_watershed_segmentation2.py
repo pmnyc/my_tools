@@ -9,7 +9,10 @@ from skimage.util import img_as_ubyte
 from PIL import Image, ImageDraw, ImageFont
 
 
-def getSegmentedImage(imagefile, show_image_width_inches=10):
+def getSegmentedImage(imagefile, show_image_width_inches=10,
+                    disk_edge = 2,
+                    disk_marker = 5,
+                    gradient_threshold = 10):
     img = cv2.imread(imagefile)
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     image = img_as_ubyte(gray)
@@ -18,16 +21,16 @@ def getSegmentedImage(imagefile, show_image_width_inches=10):
     fig_height = fig_width / (image_shape[1]*1.0/image_shape[0])
 
     # denoise image
-    denoised = rank.median(image, disk(2))
+    denoised = rank.median(image, disk(disk_edge))
 
     # find continuous region (low gradient -
     # where less than 10 for this image) --> markers
     # disk(5) is used here to get a more smooth image
-    markers = rank.gradient(denoised, disk(5)) < 10
+    markers = rank.gradient(denoised, disk(disk_marker)) < gradient_threshold
     markers = ndi.label(markers)[0]
 
     # local gradient (disk(2) is used to keep edges thin)
-    gradient = rank.gradient(denoised, disk(2))
+    gradient = rank.gradient(denoised, disk(disk_edge))
 
     # process the watershed
     labels = watershed(gradient, markers)
@@ -127,7 +130,7 @@ def roofSegmentation(imagefile,
         cnt = counts[i]
         area = cnt * pixel_size / np.cos(np.pi * slope /180.0)
         if area >= mini_area_threshould:
-            area_dic[label] = cnt * pixel_size / np.cos(np.pi * slope /180.0)
+            area_dic[label] = cnt * pixel_size
 
     # create plots
     fig, ax = plt.subplots()
@@ -150,8 +153,13 @@ def roofSegmentation(imagefile,
 
 ######## Solution #########
 
-getSegmentedImage(imagefile="5 Nichols St_resize - Copy.jpg")
+getSegmentedImage(imagefile="5 Nichols St_resize - Copy.jpg",
+                show_image_width_inches=10,
+                disk_edge = 2, disk_marker = 5, gradient_threshold = 10)
 
-roofSegmentation(imagefile="5 Nichols St_resize - Copy.jpg", shape_area=311, output_image_file='_temp.png', slope = 0,
-                    disk_edge = 2, disk_marker = 5, gradient_threshold = 10)
+roofSegmentation(imagefile="5 Nichols St_resize - Copy.jpg",
+                shape_area=311,
+                output_image_file='_temp.png',
+                slope = 0,
+                disk_edge = 2, disk_marker = 5, gradient_threshold = 10)
 
