@@ -176,12 +176,14 @@ class logs_base(object):
 
     def getCurrentTime(self):
         """
-        This program is to get the current time into a string
+        This program gets the current time into a string
+        datetime, time, string, format
         """
         time_ = str(datetime.datetime.now())
         time_ = time_.split(".")[:-1][-1]
         return time_
 
+# The following decorator calls the class logs_base above
 def logs(*argvs):
     """
     This is the decorator that writes the logs to the log file. If
