@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1230864813 source:c:\cpp_programs\budgetprograms\budget5\main.cpp
+	<cstdio>
+	<cstdlib>
+	<iostream>
+	<list>
+
