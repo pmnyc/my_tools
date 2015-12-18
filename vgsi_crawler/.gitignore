@@ -1,0 +1,10 @@
+#################
+## Specified Files
+#################
+log/
+cache/
+utils/*.pyc
+app/*.pyc
+*.pyc
+ghostdriver.log
+postprocess_output/
