@@ -1,0 +1,4 @@
+Chester, 12345 56.60
+Arthur,  34567 67.50
+Trudie,  56x78 78.90
+Valerie, 78901 89.10
