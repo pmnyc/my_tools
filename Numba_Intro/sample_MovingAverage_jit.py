@@ -1,6 +1,10 @@
 """
 A moving average function using @guvectorize.
 
+The "TRICKY" part of using @jit is to make sure the variables
+    created internally are not the ones out of what the inputs
+    defined
+
 The guvectorize (or vector for scalar) is so far the fastest
     , and it works better with numpy array types
 
@@ -34,18 +38,16 @@ xx = move_mean(arr, 3)
 
 endtime = datetime.datetime.now()
 print "It takes %s to run" %(endtime-starttime)
-# it ook 0.2 second to run through all calculations
+# it took 0.2 second to run through all calculations
 
-
-
-# @jit('f8[:](f8[:],f8)') or use following
+###################################################
 
 @jit
 def move_mean(a, window_arr):
     window_width = window_arr
     asum = 0.0
     count = 0
-    out = [None]*len(a)
+    out = np.empty((len(a),),dtype=np.float64) #THIS IS THE TRICKY PART
     for i in range(window_width):
         asum += a[i]
         count += 1
@@ -57,11 +59,43 @@ def move_mean(a, window_arr):
 
 
 import datetime
-arr = list(np.arange(20000000, dtype=np.float64))
+arr = np.arange(20000000, dtype=np.float64)
 starttime = datetime.datetime.now()
 
 x = move_mean(arr, 3)
 
 endtime = datetime.datetime.now()
 print "It takes %s to run" %(endtime-starttime)
-# It took 20 seconds to run through all calculations
+# It took 0.2 seconds to run through all calculations
+
+
+###################################################
+# THIS IS A SLOWDOWN CASE. Speed is the same as if no JIT
+
+@jit
+def move_mean(a, window_arr):
+    window_width = window_arr
+    asum = 0.0
+    count = 0
+    out = np.empty((len(a),),dtype=np.float64)
+    for i in range(window_width):
+        asum += a[i]
+        count += 1
+        count = int(str(count)) # THIS IS WHAT CAUSES SLOWDOWN DUE TO FALLING BACK TO PYTHON
+                                # DTYPE AGAIN HERE
+        out[i] = asum / count
+    for i in range(window_width, len(a)):
+        asum += a[i] - a[i - window_width]
+        out[i] = asum / count
+    return out
+
+
+import datetime
+arr = np.arange(20000000, dtype=np.float64)
+starttime = datetime.datetime.now()
+
+x = move_mean(arr, 3)
+
+endtime = datetime.datetime.now()
+print "It takes %s to run" %(endtime-starttime)
+# It took 0.2 seconds to run through all calculations
