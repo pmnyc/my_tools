@@ -4,13 +4,28 @@ Explicit @jit signatures can use a number of types. Here are some common ones:
 
 void is the return type of functions returning nothing (which actually return 
     None when called from Python)
-intp and uintp are pointer-sized integers (signed and unsigned, respectively)
-intc and uintc are equivalent to C int and unsigned int integer types
 
-int8, uint8, int16, uint16, int32, uint32, int64, uint64 are fixed-width integers 
-    of the corresponding bit width (signed and unsigned)
-float32 and float64 are single- and double-precision floating-point numbers, respectively
-complex64 and complex128 are single- and double-precision complex numbers, respectively
+------------------
+The following table contains the elementary numeric types currently defined by Numba and their aliases.
+
+Type name(s)    Shorthand   Comments
+boolean b1  represented as a byte
+uint8, byte u1  8-bit unsigned byte
+uint16  u2  16-bit unsigned integer
+uint32  u4  32-bit unsigned integer
+uint64  u8  64-bit unsigned integer
+int8, char  i1  8-bit signed byte
+int16   i2  16-bit signed integer
+int32   i4  32-bit signed integer
+int64   i8  64-bit signed integer
+intc    –   C int-sized integer
+uintc   –   C int-sized unsigned integer
+intp    –   pointer-sized integer
+uintp   –   pointer-sized unsigned integer
+float32 f4  single-precision floating-point number
+float64, double f8  double-precision floating-point number
+complex64   c8  single-precision complex number
+complex128  c16 double-precision complex number
 
 array types can be specified by indexing any numeric type, 
     e.g. float32[:] for a one-dimension single-precision array 
@@ -18,6 +33,29 @@ array types can be specified by indexing any numeric type,
 
 nogil = True can not hold Python’s global interpreter lock (GIL). Useful when 
     writing programs on multi-core system
+
+------------------
+numba.typeof(value)
+Create a Numba type accurately describing the given value. None is returned if the value isn’t supported in nopython mode.
+
+>>> numba.typeof(np.empty(3))
+array(float64, 1d, C)
+>>> numba.typeof((1, 2.0))
+(int64, float64)
+>>> numba.typeof([0])
+reflected list(int64)
+
+------------------
+Instead of using typeof(), non-trivial scalars such as structured types can also be constructed programmatically.
+
+numba.from_dtype(dtype)
+Create a Numba type corresponding to the given Numpy dtype:
+
+>>> struct_dtype = np.dtype([('row', np.float64), ('col', np.float64)])
+>>> tp
+Record([('row', '<f8'), ('col', '<f8')])
+>>> tp[:, :]
+unaligned array(Record([('row', '<f8'), ('col', '<f8')]), 2d, A)
 """
 
 from numba import jit, int32
