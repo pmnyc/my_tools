@@ -98,4 +98,4 @@ x = move_mean(arr, 3)
 
 endtime = datetime.datetime.now()
 print "It takes %s to run" %(endtime-starttime)
-# It took 0.2 seconds to run through all calculations
+# It took 13 seconds to run through all calculations
