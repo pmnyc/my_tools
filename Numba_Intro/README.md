@@ -13,7 +13,7 @@ Numba’s main features are:
 
 ## Numba Installation on OS X
 ```shell
-brew install llvm33 --rtti
+brew install llvm33 --rtti   #or install homebrew/versions/llvm33 if it did not work
 git clone https://github.com/llvmpy/llvmpy.git
 cd llvmpy
 LLVM_CONFIG_PATH=/usr/local/lib/llvm-3.3/bin/llvm-config python setup.py install
