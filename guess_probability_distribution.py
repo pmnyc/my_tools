@@ -25,18 +25,18 @@ from scipy.integrate import simps #for integration of area
 data is the series of data for testing distribution
 """
 data = np.random.gamma(4.0,scale=1.0, size=100000)
-data=np.random.uniform(size=100000)
+
 
 # Other distribution to try
 # data = np.random.normal(loc=4.0,scale=1.0,size=100000)
-# data = np.random.gumbel(loc=4.0,scale=1.0,size=100000)
+# data = np.random.uniform(size=100000)
 # data.sort()
 
 """
 Below is the generic source codes for fitting distributions
 """
 ## Test distribution fitting using Maximum Likelihood Function
-hist_gram_bin_size = 100
+hist_gram_bin_size = min(100, len(data)/10)
 # set num of top candidate distribtuions to display
 top_distr_num = 5
 # list of candidate distributions to choose from
@@ -66,13 +66,15 @@ for distribution in distributions:
     data_cache[distribution.name] =  (x,pdf_fitted_scaled, mle, pars)
     #plt.plot(x,pdf_fitted, label=distribution.name)
     #plt.xlim(np.min(x), np.max(x))
-    mles.append(mle)
+    mle_ = float('%.3f' %mle)
+    mles.append(mle_)
 
 results = map(lambda x: (x[0].name, x[1]), zip(distributions, mles))
 all_fits = sorted(zip(distributions, mles), key=lambda d: d[1])
 best_fit = all_fits[0]
-print 'Best fit reached using {}, Parameters: {}, MLE value: {}'.format(best_fit[0].name, 
-                                map(lambda t: '%.2f' %t, data_cache[best_fit[0].name][3]) , best_fit[1])
+print "NNL value is the negative log likelihood value."
+print 'Best fit reached using {}, Parameters:{}, NLL value:{}'.format(best_fit[0].name, 
+                map(lambda t: '%.3f' %t, data_cache[best_fit[0].name][3]) , best_fit[1])
 
 # Display the graphs of best fittings orderd by ranking
 for i in range(top_distr_num):
@@ -85,9 +87,18 @@ for i in range(top_distr_num):
 plt.legend(loc='best')
 plt.show()
 
+def getPerctDiff(large_,small_):
+    try:
+        f = large_ * 1.0 / small_ -1 
+        return "{0:.2f}%".format(f * 100)
+    except:
+        return 'Inf'
+
 # Show ranking of all fittings with MLE
-print "Fitting quality ranking is as follows: "
+print "Ranking of best fitting distribution is as follows: "
 for i in range(len(all_fits)):
-    print all_fits[i][0].name, '; MLE:', all_fits[i][1], '; Parameters: ', \
-              map(lambda t: '%.2f' %t, data_cache[all_fits[i][0].name][3])
+    print all_fits[i][0].name, '; NLL:', all_fits[i][1], '; Parameters:', \
+              map(lambda t: '%.2f' %t, data_cache[all_fits[i][0].name][3]), \
+              '\n'+' '*8+'NLL increase from min by %s' %getPerctDiff(all_fits[i][1], best_fit[1])
+
 
