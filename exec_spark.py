@@ -21,7 +21,8 @@ In the code, set 3 X # of cores in the slave nodes as # of slices/partitions.
     --master local[#cores] is only to let it run on master node in standalone mode.
 ----------------------------------------
 
-Launch EMR Spark Cluster
+Launch EMR Spark Cluster using AMI, it is deprecated now
+
 aws emr create-cluster \
     --no-auto-terminate \
     --name MySparkCluster \
@@ -50,6 +51,23 @@ where,
         scpt += "mv codes.rpm codes.zip ; unzip codes.zip ; chmod 644 * ; "
         scpt += "bash start_spark.sh ; "
         subprocess.call(scpt, shell=True)
+----------------------------------------
+
+Launch EMR Spark Cluster using EMR, not AMI
+
+aws emr create-cluster \
+    --no-auto-terminate \
+    --name mySparkName \
+    --tags "Name=myInstanceName" \
+    --release-label emr-4.3.0 \
+    --service-role EMR_DefaultRole \
+    --ec2-attributes InstanceProfile=EMR_EC2_DefaultRole,EmrManagedMasterSecurityGroup=sg-5emaster,EmrManagedSlaveSecurityGroup=sg-5fslave,KeyName=mypemkey,SubnetId=subnet-5caaaa \
+    --instance-type m3.xlarge \
+    --instance-count 3 \
+    --applications Name=Hive Name=Spark \
+    --bootstrap-actions Path=s3://mybucket/sparkconfig.sh \
+    --steps Name=sparklaunch,Jar=s3://elasticmapreduce/libs/script-runner/script-runner.jar,Args=s3://mybucket/exec_spark_code
+
 ----------------------------------------
 
 To terminate the cluster, use
