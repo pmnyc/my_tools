@@ -97,84 +97,132 @@ dataImputation_byH2o = function(dataframe, data_hex, predictors){
 }
 
 
-dataImputationByH2o = function( dataframe, 
-                                data_hex, 
-                                predictors,
-                                percent_data_in_training=1.0,
-                                impute_categorical_ind=TRUE,
-                                bycolumn=NULL){
-    # data is the original data frame
-    # data_hex is as.h2o hex data format of data
-    # predictors is the list of input variables that need to be imputed
-    # bycolumn defines impute by which column, for example c("pol_risk_state_cd")
-    # impute_categorical_ind is boolean for whether to impute the categorical variables
+## This is the major function that does missing data imputation
 
-    # percent_data_in_training is the % of data used in training, to save time when dealing with huge data
-    columns_types = data.frame(columns = colnames(dataframe),
-                               type=as.vector(sapply(dataframe, class))) ;
-    char_columns = as.vector(columns_types[columns_types$type %in% c("factor","character"), "columns"]) ;
-    non_char_columns = as.vector(columns_types[(!(columns_types$type %in% c("factor","character"))),"columns"]) ;
-    
-    predictors = intersect(predictors, colnames(dataframe));
-    for (col in predictors){
-        if (sum(is.na(data_hex[,col])) + sum(data_hex[,col]=="") == 0){
-            predictors <- setdiff(predictors, col);
-            print(paste("Column",col,"does not have missing values..."))
-        }
-    }
+## This is the major function that does missing data imputation
+dataImputationByH2o = function( training_data_hex,
+                                score_data_hex,
+                                predictors,
+                                percent_data_in_training=1.0,
+                                nfolds = 3,
+                                weights_column = NULL,
+                                model_storage_folder = NULL,
+                                impute_categorical_ind=TRUE,
+                                bycolumn=NULL){
+    # training_data_hex is as.h2o hex data format of training data
+        # training_data_hex is the data for training purpose
+        # it contains the missing data values
+        # model is built ONLY on training_data_hex
+    # score_data_hex is the hex data that will be imputed
+    # predictors is the list of input variables that need to be imputed
+    # bycolumn defines impute by which column, for example c("pol_risk_state_cd")
+    # impute_categorical_ind is boolean for whether to impute the categorical variables
+    # weights_column specifies which column is the weight column
 
-    for (col in intersect(predictors, char_columns)){
-            if (h2o.nlevels(data_hex[,col]) > 1000){
-                predictors <- setdiff(predictors, col);
-                print(paste("Column",col,"has move than 1000 levels..."))
-            }
-    }
+    # percent_data_in_training is the % of data used in training, to save time when dealing with huge data
+    
+    if (is.null(model_storage_folder)){model_storage_folder = gsub("/","\\\\", getwd())}else{model_storage_folder = gsub("/","\\\\", model_storage_folder)}
+    
+    data_hex = training_data_hex;
+    dataframe = as.data.frame(data_hex[1:2,]);
+    
+    columns_types = data.frame(columns = colnames(dataframe),
+                               type=as.vector(sapply(dataframe, class))) ;
+    char_columns = as.vector(columns_types[columns_types$type %in% c("factor","character"), "columns"]) ;
+    non_char_columns = as.vector(columns_types[(!(columns_types$type %in% c("factor","character"))),"columns"]) ;
+    
+    predictors = intersect(predictors, colnames(dataframe));
+    for (col in predictors){
+        if (sum(is.na(data_hex[,col])) + sum(data_hex[,col]=="") == 0){
+            predictors <- setdiff(predictors, col);
+            print(paste("Column",col,"does not have missing values..."))
+        }
+    }
 
-    for (i in seq(length(predictors))){
-        col = predictors[i];
-        if (col %in% char_columns){
-            if (impute_categorical_ind){
-                  #h2o.impute(data=data_hex, column= which(colnames(data_hex)==col), method="mode", by=bycolumn);
-                  #h2o.impute(data=data_hex, column= which(colnames(data_hex)==col), method="mode");
-                  predict_idx = is.na(data_hex[,col]) | data_hex[,col]=="";
-                  train_idx = !(is.na(data_hex[,col]) | data_hex[,col]=="");
-                  
-                  train_hex <- data_hex[train_idx,];
-                  sub <- sample(nrow(train_hex), floor(nrow(train_hex) * percent_data_in_training));
-                  sub <- sort(sub);
-                  gbm <- h2o.gbm(y=col, x=setdiff(colnames(data_hex),col), training_frame = train_hex[sub,],
-                                 sample_rate=0.5);
-                  pred = h2o.predict(object = gbm, newdata = data_hex[predict_idx,]);
-                  nums = as.vector(data_hex[,col]);
-                  nums[is.na(nums)] = as.vector(pred[,1])
-                  data_hex[,col] = as.h2o(nums);
-                } else{
-                    vec = as.vector(data_hex[,col]);
-                    vec[is.na(vec) | gsub("^\\s+|\\s+$", "", vec)==""] = "____NA";
-                    data_hex[,col] <- as.h2o(vec);
-                }
-        } else {
-                #h2o.impute(data=data_hex, column= which(colnames(data_hex)==col), method="median", combine_method = "interpolate");
-                predict_idx = is.na(data_hex[,col])
-                train_idx = !is.na(data_hex[,col])
+    for (col in intersect(predictors, char_columns)){
+            if (h2o.nlevels(data_hex[,col]) > 1000){
+                predictors <- setdiff(predictors, col);
+                print(paste("Column",col,"has move than 1000 levels..."))
+            }
+    }
 
-                train_hex <- data_hex[train_idx,];
-                sub <- sample(nrow(train_hex), floor(nrow(train_hex) * percent_data_in_training));
-                sub <- sort(sub);
-                gbm <- h2o.gbm(y=col, x=setdiff(colnames(data_hex),col), training_frame = train_hex[sub,],
-                    sample_rate=0.5);
-                pred = h2o.predict(object = gbm, newdata = data_hex[predict_idx,]);
-                col_idx = which(colnames(data_hex)==col);
-                var_type = unlist(h2o.getTypes(data_hex))[col_idx];
-                nums = as.vector(data_hex[,col]);
-                if (var_type == "int" | var_type == "integer"){
-                    nums[is.na(nums)] = as.integer(as.vector(pred));
-                } else {nums[is.na(nums)] = as.vector(pred)}
+    for (i in seq(length(predictors))){
+        col = predictors[i];
+        print(paste("Column",col,"is having missing values imputed..."));
+        if (col %in% char_columns){
+            if (impute_categorical_ind){
+                  #h2o.impute(data=data_hex, column= which(colnames(data_hex)==col), method="mode", by=bycolumn);
+                  #h2o.impute(data=data_hex, column= which(colnames(data_hex)==col), method="mode");
+                  predict_idx = is.na(data_hex[,col]) | data_hex[,col]=="";
+                  train_idx = !(is.na(data_hex[,col]) | data_hex[,col]=="");
+                  
+                  train_hex <- data_hex[train_idx,];
+                  sub <- sample(nrow(train_hex), floor(nrow(train_hex) * percent_data_in_training));
+                  sub <- sort(sub);
+                  gbm <- h2o.gbm(y=col, x=setdiff(colnames(data_hex),c(col, weights_column)), training_frame = train_hex[sub,],
+                                 sample_rate=0.5, nfolds=nfolds, weights_column=weights_column,
+                                 model_id = paste(col,"_gbm_model",sep=""));
+                  # score on training hex data
+                  pred = h2o.predict(object = gbm, newdata = data_hex[predict_idx,]);
+                  nums = as.vector(data_hex[,col]);
+                  nums[is.na(nums)] = as.vector(pred[,1])
+                  data_hex[,col] = as.h2o(nums);
+                  # score on the score hex data
+                  predict_score_idx = is.na(score_data_hex[,col]) | score_data_hex[,col]=="";
+                  predict_score_idx_dataframe = which(as.vector(predict_score_idx) == 1);
+                  pred_score = h2o.predict(object = gbm, newdata = score_data_hex[predict_score_idx,]);
+                  nums_score = as.vector(score_data_hex[,col]);
+                  nums_score[predict_score_idx_dataframe] = as.vector(pred_score[,1])
+                  score_data_hex[,col] = as.h2o(nums_score);
+                  # save gbm model into the output folder
+                  eval(parse(text=paste(col,"_gbm_model <- gbm",sep="")));
+                  cmd = paste("h2o.saveModel(object = ", col,"_gbm_model, path = model_storage_folder, force=TRUE);",sep="");
+                  eval(parse(text=cmd));
+                } else{
+                    vec = as.vector(score_data_hex[,col]);
+                    vec[is.na(vec) | gsub("^\\s+|\\s+$", "", vec)==""] = "____NA";
+                    score_data_hex[,col] <- as.h2o(vec);
+                }
+        } else {
+                #h2o.impute(data=data_hex, column= which(colnames(data_hex)==col), method="median", combine_method = "interpolate");
+                predict_idx = is.na(data_hex[,col])
+                train_idx = !is.na(data_hex[,col])
 
-                data_hex[,col] = as.h2o(nums);
-        }
-    }
-    return(data_hex)
+                train_hex <- data_hex[train_idx,];
+                sub <- sample(nrow(train_hex), floor(nrow(train_hex) * percent_data_in_training));
+                sub <- sort(sub);
+                gbm <- h2o.gbm(y=col, x=setdiff(colnames(data_hex),c(col, weights_column)), training_frame = train_hex[sub,],
+                                sample_rate=0.5, nfolds=nfolds, weights_column=weights_column,
+                                model_id = paste(col,"_gbm_model",sep=""));
+                # score on the training hex data
+                pred = h2o.predict(object = gbm, newdata = data_hex[predict_idx,]);
+                col_idx = which(colnames(data_hex)==col);
+                var_type = unlist(h2o.getTypes(data_hex))[col_idx];
+                nums = as.vector(data_hex[,col]);
+                if (var_type == "int" | var_type == "integer"){
+                    nums[is.na(nums)] = as.integer(as.vector(pred));
+                } else {nums[is.na(nums)] = as.vector(pred)}
+
+                data_hex[,col] = as.h2o(nums);
+                # score on the score hex data
+                predict_score_idx = is.na(score_data_hex[,col]);
+                predict_score_idx_dataframe = which(as.vector(predict_score_idx) == 1);
+                pred_score = h2o.predict(object = gbm, newdata = score_data_hex[predict_score_idx,]);
+                col_idx = which(colnames(score_data_hex)==col);
+                var_type = unlist(h2o.getTypes(score_data_hex))[col_idx];
+                nums_score = as.vector(score_data_hex[,col]);
+                if (var_type == "int" | var_type == "integer"){
+                    nums_score[predict_score_idx_dataframe] = as.integer(as.vector(pred_score));
+                } else {nums_score[predict_score_idx_dataframe] = as.vector(pred_score)}
+
+                score_data_hex[,col] = as.h2o(nums_score);
+                # save gbm model into the output folder
+                eval(parse(text=paste(col,"_gbm_model <- gbm",sep="")));
+                cmd = paste("h2o.saveModel(object = ", col,"_gbm_model, path = model_storage_folder, force=TRUE);",sep="");
+                eval(parse(text=cmd));
+        }
+    }
+    return(score_data_hex)
 }
 
 
@@ -295,9 +343,9 @@ insure$claim_count[c(4)] <- NA;
 insure_hex <- as.h2o(insure);
 insure_hex = h2o.rbind(insure_hex,insure_hex,insure_hex,insure_hex,insure_hex,insure_hex);
 
-dataImputationByH2o( dataframe = insure, 
-                    data_hex = insure_hex, 
-                    predictors = colnames(insure),
-                    impute_categorical_ind=TRUE,
-                    bycolumn=NULL)
-
+dataImputationByH2o(training_data_hex=insure_hex,
+                   score_data_hex=insure_hex[1:10,],
+                   predictors=c("car_size","age","claim_count"),
+                   percent_data_in_training=1.0,
+                   nfolds = 0,
+                   weights_column = "exposure")
