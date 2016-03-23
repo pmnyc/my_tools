@@ -103,7 +103,7 @@ dataImputation_byH2o = function(dataframe, data_hex, predictors){
 dataImputationByH2o = function( training_data_hex,
                                 score_data_hex,
                                 predictors,
-                                percent_data_in_training=1.0,
+                                percent_data_in_training=0.4, #recommended to be < 0.5
                                 nfolds = 3,
                                 weights_column = NULL,
                                 model_storage_folder = NULL,
