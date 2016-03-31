@@ -12,7 +12,7 @@ addBreaks2DataFrame = function(ds, xvar, num_cuts, cut_method=NULL){
     ####
     x_series = ds[,xvar];
     
-    if (typeof(x_series) %in% c("character","factor")){
+    if (class(x_series) %in% c("character","factor")){
         ds$varcuts = x_series
     } else{
         unqiue_x_values = unique(x_series);
@@ -34,7 +34,6 @@ addBreaks2DataFrame = function(ds, xvar, num_cuts, cut_method=NULL){
                 }
             } else {stop(paste("cut_method is not one of ","equidistant, equal_probablity, log_equidistant"))}
         }
-        
         ds = dplyr::mutate(ds, varcuts = cut(x_series, breaks = breaks, include.lowest=TRUE));
     }
     
