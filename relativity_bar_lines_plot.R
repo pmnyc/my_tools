@@ -78,6 +78,7 @@ plotRelativities = function(ds,
                             wgt_column,
                             num_cuts,
                             cut_method=NULL,
+                            relativity_scale_max = 10,
                             output_folder=NULL,
                             output_image_prefix=NULL){
     # This function plots the relativity curves of factors of predictor, relativity
@@ -93,6 +94,7 @@ plotRelativities = function(ds,
     # will automatically disabled
     # cut_method is the method for making breaks for bins. Must be one of equidistant, equal_probablity, log_equidistant
     
+    # relativity_scale_max is upper limit for the relativity curve to be drawn on plot
     # output_image_prefix is prefix of image files produced. If NULL, then no image will be produced
     
     if (is.null(output_folder)){output_folder =getwd()}
@@ -133,7 +135,7 @@ plotRelativities = function(ds,
     par(new=TRUE)
     plot(mp[1,],ds_aggregate2$xvar_factor_rel,type="l",col=colors[1],
          axes=FALSE ,ann=FALSE,
-         ylim=pmin(10,c(0,quantile(ds_aggregate2$xvar_factor_rel,0.99) * 1.5)),
+         ylim=pmin(relativity_scale_max,c(0,quantile(ds_aggregate2$xvar_factor_rel,0.99) * 1.5)),
          lwd=2) #xlim=c(0,40)
     lines(mp[1,],ds_aggregate2$actual_rel,col=colors[2], lwd=2);
     lines(mp[1,],ds_aggregate2$predict_div_actual,col=colors[3], lwd=3);
