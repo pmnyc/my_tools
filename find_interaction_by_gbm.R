@@ -13,44 +13,59 @@
 # ntrees specifies # of trees to build
 # ncores specifies how many cores to use. Default is to use all cores
 # candidate_variables is the list of candidate variables for interaction
- 
+
 interactionScoreGBM = function( gbm_formula,
                                 df, 
                                 distribution, 
                                 candidate_variables,
-                                shrinkage=0.075,
+                                shrinkage=0.05,
                                 ncores=NA,
                                 wgt=rep(1,nrow(df)),
-                                ntrees=500){
+                                ntrees=1000,
+                                miniobsinnode=5,
+                                validation_data_frame=NULL){
     require(doParallel)
     require(foreach)
     require(gbm)
- 
+
     if (is.na(ncores)){ncores <- parallel::detectCores()}
     if (typeof(gbm_formula) == "character"){gbm_formula <- formula(gbm_formula)}
     candidate_variables = candidate_variables;
- 
+
     gb = gbm(gbm_formula, data =df, distribution = distribution, weights=wgt,
-              n.trees = ntrees, interaction.depth = 8,
-              shrinkage = shrinkage, n.minobsinnode =2, keep.data=FALSE, cv.folds=ncores,
+              n.trees = ntrees, interaction.depth = 5,
+              shrinkage = shrinkage, n.minobsinnode =miniobsinnode, keep.data=FALSE, cv.folds=ncores,
               n.cores=ncores);
- 
+
     bestiter = gbm.perf(gb, method="cv");
     var_sumry = summary(gb,n.trees=bestiter);
- 
+    
+    if (distribution == "bernoulli"){
+        bestiter = gbm.perf(gb, method="cv");
+        predict_prob <- predict(gb,df,best.iter=bestiter, type="response");
+        actual_label <- factor(df[, as.character(gbm_formula)[2]]);
+        print(paste("AUC on training is", auc(roc(predict_prob,actual_label))));
+        # calculate the AUC of ROC if the validation data frame is provided
+        if (!(is.null(validation_data_frame))){
+            predict_prob <- predict(gb,validation_data_frame,best.iter=bestiter, type="response");
+            actual_label <- factor(validation_data_frame[,as.character(gbm_formula)[2]]);
+            print(paste("AUC on validation is", auc(roc(predict_prob,actual_label))));
+        }
+    }
+    
     var_sumry = as.data.frame(var_sumry)
     var_sumry_clean2 = var_sumry[var_sumry$rel.inf > 0,]
- 
+
     ### Find Interactions
     vars_inter_cand2 = as.vector(var_sumry_clean2[var_sumry_clean2$rel.inf > 0,"var"])
     vars_inter_cand3 = intersect(candidate_variables, vars_inter_cand2)
- 
+
     var_combinations = as.data.frame(combn(vars_inter_cand3, 2))
- 
+
     tryCatch(stopCluster(cl), error = function(e) {print("Finished GBM model building...")}); # just a dummy statement
     cl = makeCluster(ncores)
     registerDoParallel(cl)
- 
+
     getInteractionScore = function(gbm_obj, df, var_combinations, i){
         comb = var_combinations[,c(i)]
         vars = as.vector(comb)
@@ -59,31 +74,33 @@ interactionScoreGBM = function( gbm_formula,
         colnames(row) = c("var1","var2","interaction_score")
         return(row)
     }
- 
+
     inter_scores <- foreach(comb=seq(ncol(var_combinations)), .combine=rbind, .multicombine=TRUE,
                    .packages='gbm') %dopar% {
         getInteractionScore(gb, df, var_combinations, comb)
     }
- 
+
     tryCatch(stopCluster(cl), error = function(e) {print("cluster already stopped...")})
- 
+
     inter_scores$interaction_score = as.numeric(as.vector(inter_scores$interaction_score))
     inter_scores = inter_scores[with(inter_scores, order(-interaction_score)), ]
     return(inter_scores)
 }
- 
- 
+
+
 ######### Below is for testing the code ############
-iris <- read.csv(url("awb://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"), header = FALSE)
-names(iris) <- c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width", "Species")
-iris$Species <- as.vector(iris$Species)
-iris <- iris[iris$Species != "Iris-virginica",]
-iris$Species[iris$Species == "Iris-setosa"] = "1"
-iris$Species[iris$Species == "Iris-versicolor"] = "0"
-iris$Species = as.integer(iris$Species)
- 
-interactions = interactionScoreGBM(gbm_formula = "Species ~ .",
-                                df = iris, 
-                                distribution = "bernoulli",
-                                candidate_variables=c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width"),
-                                shrinkage=0.1)
+if (FALSE){
+    iris <- read.csv(url("http://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"), header = FALSE)
+    names(iris) <- c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width", "Species")
+    iris$Species <- as.vector(iris$Species)
+    iris <- iris[iris$Species != "Iris-virginica",]
+    iris$Species[iris$Species == "Iris-setosa"] = "1"
+    iris$Species[iris$Species == "Iris-versicolor"] = "0"
+    iris$Species = as.integer(iris$Species)
+
+    interactions = interactionScoreGBM(gbm_formula = "Species ~ .",
+                                    df = iris, 
+                                    distribution = "bernoulli", 
+                                    candidate_variables=c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width"),
+                                    shrinkage=0.1)
+}
