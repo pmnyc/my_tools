@@ -1,1 +1,0 @@
-from .gdbn import DBN as DBN
