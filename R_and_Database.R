@@ -510,6 +510,12 @@ checkMissingPerct = function(data){
     return(missingPerct)
 }
 
+## Deal with ARFF file
+if (FALSE) {
+    foreign::write.arff(data, file="test.arff")
+    foreign::read.arff(file="test.arff")
+    h2o.importFile(path="test.arff")
+}
 
 ## This is the major function that does missing data imputation
 dataImputationByH2o = function( training_data_hex,
