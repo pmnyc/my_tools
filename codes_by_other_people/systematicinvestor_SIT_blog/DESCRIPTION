@@ -1,0 +1,17 @@
+Package: SIT.blog
+Title: Helper functions to automate Blog post generation
+Description: Helper functions to automate Blog post generation
+Version: 0.1
+Authors@R: as.person("Systematic Investor <TheSystematicInvestor@gmail.com> [aut, cre]")
+URL: https://github.com/systematicinvestor/SIT.blog
+Depends:
+    R (>= 3.0)
+Depends:
+    knitr
+Imports:
+    knitr
+Suggests:
+    testthat
+License: GPL-3
+LazyData: true
+RoxygenNote: 5.0.1
