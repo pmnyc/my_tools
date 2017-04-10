@@ -1,0 +1,55 @@
+<!-- View a DeepOSM predicted error on the map.
+-->
+
+{% extends 'base.html' %}
+
+{% block head_content %}
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+    <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+    <style> 
+        #mapid { height: 70%; margin-top:20px;}
+    </style>
+{% endblock%}
+
+
+{% block content %}
+    
+    {% if request.GET.flag_error %}
+    <div class="alert alert-danger" role="alert">
+        Good job! You have successfully flagged a prediction as terrible. DeepOSM wil be told to try harder next time, and this error will get removed from the main list.
+    </div>
+    {% endif %}
+
+    <table>
+      <tr>
+          <td>
+               <span class=gray-span>{{ analysis_title }}</span> - <a href="/road-registration-errors/USA/{{state_name}}/list/">{{ state_title }}</a> - <a href="/{{ analysis_type }}/{{ country_abbrev }}/{{ state_name }}/view/{{ error.id }}/">#{{ error.id }}</a>
+          </td>
+          <td>
+                Likely Error {% widthratio error.certainty 1 85 %}%
+          </td>
+          <td>
+             <a class="btn btn-success" target="_blank" href=https://www.openstreetmap.org/edit#map=18/{{center.0}}/{{center.1}}
+>Fix in OpenStreetMap</a>
+          </td>
+          <td>
+             <form method="POST" action="/{{ analysis_type }}/{{ country_abbrev }}/{{ state_name }}/view/{{ error.id }}/?flag_error=True" style="margin:0">
+                 {% csrf_token %}
+                 <input class="btn btn-danger" type="submit" value="Flag Bad Predicton ({{error.flagged_count}})"></input>
+              </form>
+          </td>
+      </tr>
+    </table>
+
+    <div id="mapid"></div>
+    
+    <script type="text/javascript">
+        var mymap = L.map('mapid').setView([{{center.0}}, {{center.1}}], 18);
+
+        var satLayer = L.tileLayer('http://a.tiles.mapbox.com/v3/trailbehind.map-e7o3271e/{z}/{x}/{y}.png', {
+            attribution: 'Mapbox',
+            maxZoom: 18, })
+        satLayer.addTo(mymap);
+    </script>
+
+{% endblock %}
