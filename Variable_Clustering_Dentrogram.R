@@ -46,6 +46,38 @@ for (v_ in char_vars) {
 }
 
 xmatrix <- design_matrix_with_all_levels(colnames(dt), dt)
+dists = dist(abs(cor(na.omit(xmatrix[, -which(variances < 1e-6)]))))
+# Different ways of plotting dendrogram
+plot(hclust(dists), main="ARA Ireland Variables Cluster Dentrogram", sub="")
+dend = as.dendrogram(hclust(dists), method = "complete")
+dendextend::circlize_dendrogram(dend)
+dend %>% set("labels_col", "blue") %>% plot(main="ARA Ireland Variables Cluster Dentrogram", sub="")
+dend %>%
+    set("branches_lwd", c(4,1)) %>%
+    set("branches_lty", c(1,1,3)) %>%
+    set("branches_col", c(1,2,3)) %>%
+    plot(main="ARA Ireland Variables Cluster Dentrogram", sub="")
+dend %>% set("branches_k_color", k = 3) %>% plot(main="ARA Ireland Variables Cluster Dentrogram", sub="")
+dend %>% set("branches_k_color", value = 3:1, k = 3) %>% plot(main="ARA Ireland Variables Cluster Dentrogram", sub="")
+dend %>% rect.dendrogram(k=20,horiz = TRUE,border = 8, lty = 5, lwd = 2)
 
-dists = dist(abs(cor(na.omit(xmatrix))))
-plot(hclust(dists), main="Variables Cluster Dentrogram", sub="")
+par(mar=par('mar')+c(0,0,0,6))
+dend <- dists %>% hclust %>% as.dendrogram(method = "complete") %>%
+    set("branches_k_color", k=3) %>%
+    set("branches_lwd", c(1.5,1,1.5)) %>%
+    set("branches_lty", c(1,1,3,1,1,2)) %>%
+    set("labels_colors") %>%
+    set("nodes_pch", 19) %>%
+    set("nodes_col", c("orange", "black", "plum", NA))
+    #%>%  set("labels_cex", c(.9,1.2))
+# plot the dend in usual "base" plotting engine:
+plot(dend, main="ARA Ireland Variables Cluster Dentrogram", horiz =TRUE,sub="")
+abline(v = 0.5, col = 'gray', lty = 1.0)
+abline(v = 1.0, col = 'gray', lty = 1.0)
+abline(v = 1.5, col = 'gray', lty = 1.0)
+
+library(ggplot2)
+ggd1 <- as.ggdend(dend)
+# the nodes are not implemented yet.
+ggplot(ggd1) # reproducing the above plot in ggplot2 :)
+ggplot(ggd1, horiz = TRUE, theme = NULL)
