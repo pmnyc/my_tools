@@ -1,5 +1,3 @@
-# Author: Man Peng
-# May 2017
 
 ###############################################################
 # Boosting Tree for Regresison Problem
