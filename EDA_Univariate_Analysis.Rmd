@@ -1,0 +1,126 @@
+---
+title: "EDA on Pricing Model Data"
+author: "Somebody"
+date: "July 2017"
+output:
+  html_document: default
+  html_notebook: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+```
+
+
+### What Do Data Look Like?
+```{r, echo = FALSE, message=FALSE, warning=FALSE, include=FALSE}
+require(data.table)
+require(plotly)
+require(DT)
+require(stringr)
+
+if (!"data" %in% ls()) {
+    data <- readRDS("mydata.rds")
+}
+
+workdir <- "C:/mymodel"
+```
+
+#### Variable Summary
+```{r summary(data), echo=FALSE, message=FALSE, warning=FALSE}
+# summary(data)
+datatable(head(data, 100), style="bootstrap", class="table-condensed", options = list(dom = 'tp',scrollX = TRUE))
+```
+
+```{r variable_situation, echo=FALSE, message=TRUE, warning=FALSE}
+for (col in colnames(data)) {
+    class_ <- data[1, class(get(col))]
+    miss_ <- round(100*data[, sum(is.na(get(col)))]/nrow(data),1)
+    if (class_ %in% c("numeric","integer")) {
+        message(paste0("Summary for Variable ", col, ": Numerical (", miss_, "% Missing Values)"))
+        print(summary(data[, get(col)]))
+        message(paste0(rep("-",80), collapse=""))
+    } else {
+        x_ <- sort(table(data[, get(col)]), decreasing=T)
+        x_ <- x_[1:min(10, length(x_))]
+        message(paste0("Summary for Variable ", col, ": Categorical (", miss_, "% Missing Values)"))
+        message(paste0("   There are ", length(setdiff(data[, unique(get(col))], NA)), " unique values."))
+        message(paste0("Top values are:"))
+        print(x_)
+        message(paste0(rep("-",80), collapse=""))
+    }
+}
+```
+
+```{r define_univ_analsyis_plots, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+univariate_plots <- function(loss_var, exposure_var, x_var, plot_title,
+                            data=data) {
+    # Function for plotting the univariate analysis
+    dt_ <- data[, .(pp=sum(get(loss_var))/sum(get(exposure_var)),
+                    exp=sum(get(exposure_var))), by=x_var]
+    dt_[, x := get(x_var)]
+    dt_ <- dt_[order(get(x_var))]
+    dt_[, mean_pp := sum(pp * exp)/sum(exp)]
+    class_ <- data[1, class(get(x_var))]
+    if (class_ %in% c("character", "factor")) {
+        dt_[is.na(x), x := ""]
+        dt_ <- dt_[order(x)]
+        p_ <- plot_ly(dt_) %>%
+            add_trace(x = ~x, y = ~pp, name=paste0("PP"), type = 'scatter', mode = 'lines+markers')%>%
+            add_trace(x = ~x, y = ~mean_pp, name = 'Overall PP', type = 'scatter', mode = 'lines', line = list(color = 'gray', width=0.6), alpha=0.7)%>%
+            add_trace(x=~x, y=~exp, type = "bar", yaxis = "y2", alpha=0.35, name= "Exposure")%>%
+            layout(title = plot_title,
+                    xaxis = list(title = x_var),
+                    yaxis = list(range = c(0, min(1000, max(dt_$pp) * 1.1)), side = 'left', title = 'Average PP', showgrid = FALSE, zeroline = FALSE),
+                    yaxis2 = list(range = c(0, max(dt_$exp) * 1.1), side = 'right', overlaying = "y", tickfont = list(color = "black"), title = 'Exposure', showgrid = FALSE, zeroline = FALSE),
+                    margin = list(b = 100))
+    } else {
+        p_ <- plot_ly(dt_) %>%
+            add_trace(x = ~x, y = ~pp, name=paste0("PP"), type = 'scatter', mode = 'lines+markers')%>%
+            add_trace(x = ~x, y = ~mean_pp, name = 'Overall PP', type = 'scatter', mode = 'lines', line = list(color = 'gray', width=0.6), alpha=0.7)%>%
+            add_trace(x=~x, y=~exp, type = "bar", yaxis = "y2", alpha=0.35, name= "Exposure")%>%
+            layout(title = plot_title,
+                    xaxis = list(range = c(dt_[, min(x, na.rm=T)], dt_[, max(x, na.rm=T)]), title = x_var),
+                    yaxis = list(range = c(0, min(1000, max(dt_[!is.na(x), pp]) * 1.1)), side = 'left', title = 'Average PP', showgrid = FALSE, zeroline = FALSE),
+                    yaxis2 = list(range = c(0, max(dt_[!is.na(x), exp]) * 1.1), side = 'right', overlaying = "y", tickfont = list(color = "black"), title = 'Exposure', showgrid = FALSE, zeroline = FALSE),
+                    margin = list(b = 100))
+    }
+    return(p_)
+}
+```
+
+### Univariate Analysis & Plots -- BI
+
+```{r BI_UnivAnalysis, echo=FALSE, message=FALSE, warning=FALSE}
+ll <- htmltools::tagList()
+counter = 1
+# The parameters above should not be overwritten
+
+loss_var <- "incurred_loss"
+exposure_var <- "exposure"
+
+for (x_var in features_to_plot) {
+    if (!x_var %in% colnames(data)) {next}
+    plot_title <- paste0(x_var, " -- BI Pure Premium (capped@250K)")
+    x_var2 <- x_var
+    class_ <- data[1, class(get(x_var))]
+    if ((class_ %in% c("integer", "numeric")) & data[, length(unique(get(x_var)))] >= 19) {
+        bucket_quantiles <- seq(0,1, by=0.05)
+        buckets <- c(c(data[, min(get(x_var), na.rm=T)], data[, max(get(x_var), na.rm=T)+1]), quantile(data[, get(x_var)], probs = setdiff(bucket_quantiles, c(0,1)), na.rm=T))
+        buckets <- sort(unique(buckets))
+        x_ <- cut(data[, get(x_var)], buckets, right = FALSE)
+        x_ <- paste0(str_pad(as.integer(x_), 2, pad = "0"), ") ", x_)
+        data[, paste0(x_var, "_bin") := x_]
+        rm(x_, buckets, bucket_quantiles)
+        x_var2 <- paste0(x_var, "_bin")
+    }
+    p_ <- univariate_plots(loss_var, exposure_var, x_var2, plot_title, data=data)
+    ll[[counter]] <- p_
+    counter <- counter + 1
+}
+
+ll
+```
+
