@@ -1,0 +1,181 @@
+---
+title: "Zillow Exploratory Analysis"
+author: "Troy Walters"
+date: "May 24, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE)
+```
+
+```{r, message=FALSE}
+
+library(data.table)
+library(bit64)
+library(tidyverse)
+library(corrplot)
+library(DT)
+library(leaflet)
+library(htmltools)
+
+```
+
+```{r, warning=FALSE}
+
+train_2016 <- fread('../input/train_2016.csv', showProgress=FALSE)
+properties_2016 <- fread('../input/properties_2016.csv', showProgress=FALSE)
+
+```
+
+First, let's join the two tables together on the parcelid column such that we only include properties that have a target value in train_2016.
+
+```{r}
+
+# set key of both sets to parcelid
+setkey(train_2016, parcelid)
+setkey(properties_2016, parcelid)
+
+# perform the join using data.table
+dtrain <- properties_2016[train_2016]
+
+# Remove train_2016 and properties_2016
+rm(train_2016, properties_2016)
+
+```
+
+Now that we've joined the two data sets and have the complete set of properties with a corresponding target feature, let's see how much of the data is missing. 
+
+```{r}
+
+miss_pct <- map_dbl(dtrain, function(x) { round((sum(is.na(x)) / length(x)) * 100, 1) })
+
+miss_pct <- miss_pct[miss_pct > 0]
+
+data.frame(miss=miss_pct, var=names(miss_pct), row.names=NULL) %>%
+    ggplot(aes(x=reorder(var, -miss), y=miss)) + 
+    geom_bar(stat='identity', fill='red') +
+    labs(x='', y='% missing', title='Percent missing data by feature') +
+    theme(axis.text.x=element_text(angle=90, hjust=1))
+
+```
+
+Unlike some of the other home price competitions on kaggle where we simply predict the homes sale price, here we are tasked with predicting the log error between the Zillow Zestimate and the actual sale price. 
+
+To start, let's look at a correlation plot of some of the numeric features including logerror. 
+
+```{r, warning=FALSE}
+
+cnt_vars <- c('bathroomcnt', 'bedroomcnt', 'calculatedbathnbr','fireplacecnt','fullbathcnt', 
+              'garagecarcnt', 'poolcnt', 'roomcnt', 'threequarterbathnbr', 'unitcnt', 
+              'numberofstories', 'logerror')
+
+corrplot(cor(dtrain[, ..cnt_vars], use='pairwise.complete.obs'), type='lower')
+
+```
+
+As we might suspect, the log error does not seem to have any correlation with any of these features. 
+
+
+First, let's take a look at the distribution of the target feature: the 'logerror'
+
+```{r}
+
+dtrain %>%
+    ggplot(aes(x=logerror)) + 
+    geom_density(fill='steelblue', color='steelblue') + 
+    ggtitle('Distribution of logerror')
+
+```
+
+Let's see if the error varies across the the time period of the training set.
+
+```{r}
+
+# make transactiondate column a Date object
+dtrain[, transactiondate := as.Date(transactiondate)]
+
+dtrain[, list(med_error= mean(logerror)), by=transactiondate] %>%
+    ggplot(aes(x=transactiondate, y=med_error)) + 
+    geom_bar(stat='identity', fill='steelblue') + 
+    labs(x='', y='Mean log error', title='Mean log error over time')
+
+```
+
+What is the volume of transaction over time?
+
+```{r}
+
+dtrain[, .N, by=transactiondate] %>%
+    ggplot(aes(x=transactiondate, y=N)) + 
+    geom_bar(stat='identity', color='steelblue') + 
+    labs(x='', y='Number of transactions', title='Total transactions by day')
+
+```
+
+As explained in the data description, the transactions are undersampled after October 15, 2016. The test data contains the remainder of the observations after October 15. 
+
+Let's build a map of the homes. To avoid overplotting, we'll use leaflet's clustering option and then add labels. Hover over an individual point to see that home's data.
+
+```{r, warning=FALSE, fig.align='center'}
+
+dtrain[, 
+       list(label=HTML(
+           paste(sep="<br>",
+                 paste("Bedrooms:", bedroomcnt),
+                 paste("Bathrooms:", bathroomcnt),
+                 paste("Total area:", finishedsquarefeet15)))), 
+       list(longitude, latitude)] %>%
+    leaflet() %>%
+    addTiles() %>%
+    addCircleMarkers(
+    lat =  ~ latitude / 10e5,
+    lng =  ~ longitude / 10e5,
+    label = ~label,
+    clusterOptions = markerClusterOptions()
+    )
+    
+
+```
+
+
+Let's see if there is a significant difference in log error between the three counties (Los Angeles, Orange, and Ventura) in the data set. 
+
+```{r}
+
+dtrain[, list(n=.N, mean_error=mean(logerror), st_dev_error=sd(logerror)), by=regionidcounty] %>%
+    round(3) %>% datatable()
+
+```
+
+It's unclear which id represents each of the three counties. However, judging by the number of transactions, I'd say that 3101 refers to Los Angeles county, 1266 is Orange county, and 2061 is Ventura county. There does not appear to be much difference in the log error between the three counties. 
+
+Is there a difference in error between the building quality types?
+
+```{r}
+
+dtrain %>%
+    ggplot(aes(x=as.factor(buildingqualitytypeid), y=logerror)) + 
+    geom_jitter(alpha=0.5, color='lightgrey') + 
+    geom_violin(color='steelblue', fill='steelblue')
+
+
+```
+
+It is difficult to see any difference in error across the various building types. The error is normally distributed with a low standard deviation across each of the building type categories with a reasonable number of observations. 
+
+It's beginning to look like this will be a difficult competition in which to get ahead. There is litle variation in log error across any of the features. Of course, this is to be expected given that Zillow has refined their prediction system over many years. 
+
+Is there any variation in the log error by build year?
+
+```{r}
+
+dtrain[, list(mean_error=mean(logerror)), by=yearbuilt] %>%
+    ggplot(aes(x=yearbuilt, y=mean_error)) + 
+    geom_point(color='grey', alpha=0.8) + 
+    geom_smooth(color='steelblue') + 
+    labs(y='Mean log error', title='Mean log error by year built')
+    
+```
+
+I am only getting started and plan to add a lot more to this soon. Please check back.
