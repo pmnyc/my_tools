@@ -1,0 +1,57 @@
+-- Upload data using Hue to /user/admin/dam
+-- Create directory /user/admin/dam
+-- Create directory /user/admin/dam/companylist
+-- Create directory /user/admin/dam/stock_eod
+
+create database if not exists nyse_gbdc;
+
+create table companylist
+(symbol string,
+name string, 
+lastsale decimal,
+marketcap decimal,
+adrtso string,
+ipoyear string,
+sector string,
+industry string,
+summaryquote string)
+row format delimited fields terminated by '|'
+stored as textfile;
+
+load data inpath '/user/admin/dam/companylist/*' overwrite into table companylist;
+
+create external table stock_eod 
+(stockticker string, 
+transactiondate string, 
+openprice float, 
+highprice float, 
+lowprice float, 
+closeprice float, 
+volume bigint) 
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' 
+LOCATION '/user/admin/dam/stock_eod';
+
+#Choose Query Editors
+#Click on Settings
+#Under File Resources change Type to Jar, 
+#then upload the volume_analytics.jar file from github
+#You can get volume_analytics.jar file from
+#https://github.com/dgadiraju/code/blob/master/hadoop/volume_analytics.jar
+#Then function name datetranslate
+#class name analytics.nyse.hive.udfs.DateTranslate
+
+#In case you want to add using commandline interface
+add jar /home/ec2-user/nyse-0.0.1-SNAPSHOT.jar;
+create temporary function datetranslate as 'analytics.nyse.hive.udfs.DateTranslate';
+
+#Once function is created, you can run below query
+create table stock_volume_per_month 
+row format delimited fields terminated by '|' 
+as 
+select cl.sector, cl.name, 
+substr(datetranslate(s.transactiondate), 1, 7) transactionmonth, 
+sum(s.volume) monthlyvolume from companylist cl 
+join stock_eod s on s.stockticker = cl.symbol 
+where s.transactiondate like '%2013' 
+group by cl.sector, cl.name, substr(datetranslate(s.transactiondate), 1, 7) 
+order by sector, name, transactionmonth;
