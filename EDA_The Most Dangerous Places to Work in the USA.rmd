@@ -1,0 +1,593 @@
+---
+title: "The Most Dangerous Places to Work in the USA"
+author: "Pranav Pandya"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    number_sections: false
+    toc: true
+    highlight: tango
+    theme: cosmo
+    smart: true
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+
+-------------------------------------------------------------------------------------
+
+## Introduction
+This dataset provides injury data for US workers. Data covers ~22k incidents from Jan 1 2015 to Feb 28 2017. There are total 26 columns that describe incident, parties involved, employer, geographical data, injury sustained, and final outcome. 
+
+Motivation for this kernel is to illustrate visualization capabilities in R with highcharter, leaflet, plotly, ggplot2 as well as making use of tabs to tidy lengthy report. 
+
+## Data preparation
+### Load, clean and select appropriate data {.tabset .tabset-fade .tabset-pills}
+
+#### Original dataset (glimpse)
+- Trick to show lengthy table in tidy way:
+The **Responsive** extension in datatable makes the table columns responsive in the sense that when the page is too narrow, certain columns can be automatically collapsed and hidden. In this dataset, we have 26 columns and some columns have lenghthy text. With responsive extension, you will see a sequence of columns collapsed and a button appear on the left. You can click the button to expand the data of the hidden columns behind it.
+
+- Many states and cities seems to be misplaced in original dataset. Click on third tab "Clean dirty data" to view procedure clean city, state and co-ordinated based on zipcode.
+```{r warning=FALSE, message=FALSE}
+pkgs <- c("readr", "data.table", "dplyr", "tidyr", "DT", "reshape2", "tm", "stringr", "gsubfn", "lubridate",
+          "ggplot2", "gridExtra", "highcharter", "plotly", "ggrepel", "leaflet", "leaflet.extras", "ggmap", 
+          "RColorBrewer", "viridisLite", "countrycode", "ggmap", "zipcode") 
+
+for (pkg in pkgs) {
+                    if (! (pkg %in% rownames(installed.packages())))
+                      { install.packages(pkg) }
+                    require(pkg, character.only = TRUE)
+                  }
+rm(pkgs, pkg)
+
+#Load data 
+df <- fread("../input/severeinjury.csv", na.strings = "" ,stringsAsFactors = FALSE, strip.white = TRUE, data.table = FALSE)
+
+df %>% head(10) %>% datatable(style="bootstrap", class="table-condensed", extensions = 'Responsive',
+                 options = list(dom = 'tp',scrollX = TRUE, pageLength = 5))
+
+```
+
+#### Clean column names
+Procedure:  Replace spaces with underscore using "gsub", select useful columns, transform EventDate to date format with "mdy" and rename columns for further use. Below are the column names before and after transformation:
+```{r warning=FALSE, message=FALSE}
+#Fix column names
+vars = names(df)
+vars
+
+cleanvars <- gsub(' ', '_', vars)
+colnames(df) <- cleanvars
+
+df<- df %>% 
+  select(c(EventDate, Employer, Zip, City, State, Longitude, Latitude, 
+           NatureTitle, Part_of_Body_Title, Hospitalized, Amputation, 
+           EventTitle, SourceTitle, Secondary_Source_Title, Final_Narrative )) %>%
+  mutate(EventDate = mdy(EventDate)) %>%
+  rename(Injury = NatureTitle, Part_of_Body = Part_of_Body_Title, 
+         count_Hospitalized = Hospitalized, count_Amputation =Amputation, 
+         Event = EventTitle, Source = SourceTitle, Sec_Source = Secondary_Source_Title)
+
+names(df)
+```
+
+#### Clean dirty data
+
+-Fix misplaced city and state names, lat long, typos in employer name
+
+The dataset contains information for US only and luckily we have "zipcode" package which can extract exact longitude and latitude from zip codes. In original dataset, it seems to be some issue with Longitude data so let's fix this by simple merge with zipcode data.
+
+It is also observed that original dataset contains misplaced city and state names in City and State column. Again, "zipcode" package will be helpful to standardize latitude, longitude, city and state name based on zipcode as a key. 
+
+The employer column contains many typos and thus Employer name is not unique. For example, entries for US Postal Service is something like this: usps, us postal, united states postal, u.s. postal, u.s postal, u. s postal, u. s. postal. This makes it difficult to group by and summarise counts to quickly visualize it. 
+Procedure: 
+
+1) For lat longs: Load zipcode data from "zipcode" package, select zip, lon and lat, merge (left join/ all.x= true) with dummy dataframe, inspect and then replace lat longs to original dataset. 
+
+2) For duplicates in Employer column: Use "gsub" to find patterns and add desired replacements in original column (df$Employer). Although gsub is not efficient approach when we have thousands of rows. Another approach was to use levenshtein distance for string matchin but UPS and USPS closely matches for this dataset so let's use "gsub" as a temporary fix for time being.  
+
+```{r warning=FALSE, message=FALSE}
+data("zipcode")
+
+latlongs = zipcode %>%  rename(Zip = zip)
+
+dfzip = df %>% select(Zip)
+dfzip = merge(dfzip, latlongs, by = "Zip", all.x = TRUE)
+
+df$Longitude = dfzip$longitude
+df$Latitude = dfzip$latitude
+
+df$City = dfzip$city
+df$State = dfzip$state
+
+#assign column names for quick reference during visualization
+vars = names(df)
+
+#inspect all variables
+#glimpse(df)
+
+df$Employer =gsub(".*usps|us postal|united states postal|u.s. postal|u.s postal|u. s postal|u. s. postal.*","US_Postal_Service", 
+                   ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*US_Postal_Service.*","USPS", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*united parcel|ups |ups,.*","United_Parcel_Service", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*United_Parcel_Service.*","UPS", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*american airl.*","American Airlines", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*AT &|AT&.*","AT_T", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*AT_T.*","AT&T Inc", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*walmart|wallmart|wal-mart.*","wal_mart", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*wal_mart.*","Walmart", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*Publix.*","Publix_", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*Publix_.*","Publix", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*Asplundh.*","Asplundh_", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*Asplundh_.*","Asplundh", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*sodexo.*","sodexo_", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*sodexo_.*","Sodexo", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*Waste Management.*","Waste_Management", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*Waste_Management.*","Waste Management", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*Tyson Foods.*","Tyson_Foods", ignore.case = TRUE, df$Employer)
+df$Employer =gsub(".*Tyson_Foods.*","Tyson Foods", ignore.case = TRUE, df$Employer)
+
+```
+
+##Visualizations:
+###By employers {.tabset .tabset-fade .tabset-pills}
+
+#### Top 10 dangerous employers
+```{r out.width="100%"}
+dfcity <- df %>% group_by(City) %>% filter(count_Hospitalized != 0 || count_Amputation != 0) %>%
+  summarize(count = n()) %>% arrange(desc(count)) %>% head(10)
+dfstate <- df %>% group_by(State) %>% filter(count_Hospitalized != 0 || count_Amputation != 0) %>%
+  summarize(count = n()) %>% arrange(desc(count)) %>% head(10)
+dfemp <- df %>% group_by(Employer) %>% filter(count_Hospitalized != 0 || count_Amputation != 0) %>%
+  summarize(count = n()) %>% arrange(desc(count)) %>% head(10)
+
+highchart(height = "700px") %>% 
+  hc_title(text = "Top 10 most dangerous employers, cities and states for workers") %>%
+  hc_subtitle(text = "Based on number of workers hospitalized and amputated from 2015 onward | Pie chart 1 for cities and Pie chart 2 is for states") %>%
+  hc_credits(enabled = TRUE, text = "Sources: Occupational Safety and Health Administration aka OSHA", 
+             style = list(fontSize = "10px")) %>%
+  hc_add_theme(hc_theme_sandsignika()) %>%
+  hc_add_series_labels_values(dfemp$Employer, dfemp$count, name = "Show/ hide bar chart", 
+                              dataLabels = list(align = "center", enabled = TRUE),
+                              colors = substr(heat.colors(10), 0 , 7),
+                              colorByPoint = TRUE, type = "column") %>% 
+  hc_add_series_labels_values(dfcity$City, dfcity$count, name = "Pie chart- Cities", 
+                              colors = substr(heat.colors(10), 0 , 7),
+                              type = "pie", innerSize= '40%', size= "30%", showInLegend=F,
+                              colorByPoint = TRUE, center = c('37%', '30%'),
+                              size = 100, dataLabels = list(align = "center", enabled = TRUE)) %>% 
+  hc_add_series_labels_values(dfstate$State, dfstate$count, name = "Pie chart- States", 
+                              colors = substr(heat.colors(10), 0 , 7),
+                              type = "pie", innerSize= '40%', size= "30%", showInLegend=F,
+                              colorByPoint = TRUE, center = c('81%', '30%'),
+                              size = 100, dataLabels = list(align = "center", enabled = TRUE)) %>% 
+  hc_yAxis(title = list(text = "Total counts of injury"),
+           labels = list(format = "{value}"), max = 415) %>% 
+  hc_xAxis(categories = dfemp$Employer, title = list(text = "Employer name")) %>% 
+  hc_legend(enabled = T, align= "left", verticalAlign = "bottom") %>% 
+  hc_tooltip(pointFormat = "{point.y}")
+
+```
+
+#### By state and date
+```{r, fig.align="center", fig.height= 6, out.width="100%"}
+df %>%
+  group_by(Employer, State) %>%
+  filter(count_Hospitalized != 0 || count_Amputation != 0) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  #filter(count >=3) %>%
+  head(40) %>%
+  plot_ly(x = ~Employer, y = ~State, z = ~count, color = ~count) %>%
+  add_markers() %>%
+  layout(title = "Top 40 Injury counts by states and employers",
+         scene = list(xaxis = list(title = 'Employer'),
+                     yaxis = list(title = 'State'),
+                     zaxis = list(title = 'total counts')))
+```
+
+
+#### By city and date
+```{r, fig.align="center", fig.height= 6, out.width="100%"}
+df %>%
+  group_by(Employer, City) %>%
+  filter(count_Hospitalized != 0 || count_Amputation != 0) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  head(40) %>%
+  plot_ly(x = ~Employer, y = ~City, z = ~count, color = ~count) %>%
+  add_markers()%>%
+  layout(title = "Top 40 Injury counts by cities and employers",
+         scene = list(xaxis = list(title = 'Employer'),
+                     yaxis = list(title = 'City'),
+                     zaxis = list(title = 'total counts')))
+```
+
+#### Tricks/ help text
+The highcharter is one of the best best library for interactive visualization in R. It's also possible to combine multiple plots within one plot as shown in first plot where two pie charts are positioned within bar chart area. In order to change the default colors, apply following arguments:
+
+- colors = substr(heat.colors(10), 0 , 7), colorByPoint = TRUE
+
+Other available colors are as below:
+
+- rainbow(n, s = 1, v = 1, start = 0, end = max(1, n - 1)/n, alpha = 1)
+- terrain.colors(n, alpha = 1)
+- topo.colors(n, alpha = 1)
+- cm.colors(n, alpha = 1)
+
+###By reported sources, injuries and injured body parts {.tabset .tabset-fade .tabset-pills}
+The good thing about this dataset is that most columns (including main source, secondary source, injury type, body part, event etc.) contains unique values without typos. This, of course, makes it easy to visualize the data much quickly. 
+
+#### Main source
+```{r, fig.align="left"}
+df %>% group_by(Source) %>% 
+  filter(count_Hospitalized !=0 || count_Amputation !=0) %>% 
+  summarise(count = n()) %>% arrange(desc(count)) %>% head(30) %>%
+  hchart("pie", innerSize= '40%', showInLegend= F,
+        hcaes(x = Source, y = count, color = -count)) %>%
+  hc_add_theme(hc_theme_ffx()) %>% 
+  hc_title(text = "Top 30 sources causing injuries from 2015 onward") %>%
+  hc_credits(enabled = TRUE, text = "Sources: Occupational Safety and Health Administration aka OSHA", 
+             style = list(fontSize = "10px"))
+
+```
+
+#### Secondary source
+```{r, fig.align="left"}
+df %>% group_by(Sec_Source) %>% 
+  filter(count_Hospitalized !=0 || count_Amputation !=0) %>%  na.omit(count) %>%  
+  summarise(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  head(30) %>%
+  hchart("pyramid", reversed= FALSE, width= "60%", 
+         hcaes(x = Sec_Source, y = count, color = -count, size = count)) %>%
+  hc_legend(enabled = TRUE) %>% 
+  hc_add_theme(hc_theme_google()) %>% 
+  hc_title(text = "Top 30 secondary sources of workers injury from 2015 onwards") %>%
+  hc_credits(enabled = TRUE, text = "Sources: Occupational Safety and Health Administration aka OSHA", 
+             style = list(fontSize = "10px"))
+
+```
+
+#### Top injuries
+```{r, fig.height=8, fig.align="left"}
+df %>% group_by(Injury) %>% 
+  filter(count_Hospitalized !=0 || count_Amputation !=0) %>% 
+  summarise(count = n()) %>% arrange(desc(count)) %>% head(15) %>%
+  hchart("bar", hcaes(x = Injury, y = count, color=-count)) %>%
+  hc_legend(enabled = TRUE) %>% 
+  hc_add_theme(hc_theme_economist()) %>% 
+  hc_title(text = "Top 15 Reported injuries from 2015 onwards") %>%
+  hc_credits(enabled = TRUE, text = "Sources: Occupational Safety and Health Administration aka OSHA", 
+             style = list(fontSize = "10px"))
+
+```
+
+#### Top injured body parts
+```{r, fig.height=8, fig.align="left"}
+df %>% group_by(Part_of_Body) %>% 
+  filter(count_Hospitalized !=0 || count_Amputation !=0) %>% 
+  summarise(count = n()) %>% arrange(desc(count)) %>% head(20) %>%
+  hchart("bar", hcaes(x = Part_of_Body, y = count, color= -count)) %>%
+  hc_add_theme(hc_theme_ffx()) %>% 
+  hc_title(text = "Top 20 Reported injured body parts from 2015 onwards") %>%
+  hc_credits(enabled = TRUE, text = "Sources: Occupational Safety and Health Administration aka OSHA", 
+             style = list(fontSize = "10px"))
+
+```
+
+#### Top events
+```{r, fig.height=7, fig.align="left"}
+df %>% group_by(Event) %>% 
+  filter(count_Hospitalized !=0 || count_Amputation !=0) %>% 
+  summarise(count = n()) %>% arrange(desc(count)) %>% head(30) %>%
+  hchart(type= "treemap", 
+         hcaes(x = Event, value = count, color= count)) %>%
+  hc_add_theme(hc_theme_538()) %>% 
+  hc_title(text = "Top 30 reported events from 2015 onwards") %>%
+  hc_credits(enabled = TRUE, text = "Sources: Occupational Safety and Health Administration aka OSHA", 
+             style = list(fontSize = "10px"))
+
+```
+
+
+###Geographic Visualization {.tabset .tabset-fade .tabset-pills}
+
+
+#### Overall
+ 
+```{r warning = FALSE, fig.height=6, fig.align = 'default', out.width="100%"}
+dfo <- df %>% filter(!is.na(Longitude), !is.na(Latitude))
+  leaflet() %>%
+    addTiles('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+    attribution='Map tiles by <a href="http://stamen.com">Stamen Design</a>,
+      <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>
+      &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>') %>%
+    setView(-95, 35, zoom= 4) %>% 
+    addCircles(data = dfo, lat= ~Latitude, lng = ~Longitude,
+                popup=paste(
+                  "<strong>Date: </strong>", dfo$EventDate,
+                  "<br><strong>Hospitalized #: </strong>", dfo$count_Hospitalized,
+                  "<br><strong>Amputation #: </strong>", dfo$count_Amputation,
+                  "<br><strong>Employer: </strong>", dfo$Employer,
+                  "<br><strong>City: </strong>", dfo$City,
+                  "<br><strong>Injury: </strong>", dfo$Injury,
+                  "<br><strong>Body part: </strong>", dfo$Part_of_Body,
+                  "<br><strong>Event: </strong>", dfo$Event,
+                  "<br><strong>Source: </strong>", dfo$Source,
+                  "<br><strong>2nd source: </strong>", dfo$Sec_Source,
+                  "<br><strong>Final narrative: </strong>", dfo$Final_Narrative),
+                weight = 0.4, color="#8B1A1A", stroke = TRUE, fillOpacity = 0.6) %>%
+    addProviderTiles(providers$CartoDB.DarkMatter, group = "Black") %>%
+    addProviderTiles(providers$Esri.NatGeoWorldMap, group = "Standard") %>%
+  addScaleBar() %>%
+    addLayersControl(baseGroups = c("Black", "Standard"), options = layersControlOptions(collapsed = FALSE))
+```
+
+#### By fractures
+```{r warning = FALSE, fig.height=6, fig.align = 'default', out.width="100%"}
+dff <- df %>% filter(!is.na(Longitude), !is.na(Latitude), Injury== "Fractures")
+  leaflet() %>%
+    addTiles('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+    attribution='Map tiles by <a href="http://stamen.com">Stamen Design</a>,
+      <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>
+      &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>') %>%
+    setView(-95, 35, zoom= 4) %>% 
+    addCircles(data= dff, lat= ~Latitude, lng = ~Longitude,
+                popup=paste(
+                  "<strong>Date: </strong>", dff$EventDate,
+                  "<br><strong>Hospitalized #: </strong>", dff$count_Hospitalized,
+                  "<br><strong>Amputation #: </strong>", dff$count_Amputation,
+                  "<br><strong>Employer: </strong>", dff$Employer,
+                  "<br><strong>City: </strong>", dff$City,
+                  "<br><strong>Injury: </strong>", dff$Injury,
+                  "<br><strong>Body part: </strong>", dff$Part_of_Body,
+                  "<br><strong>Event: </strong>", dff$Event,
+                  "<br><strong>Source: </strong>", dff$Source,
+                  "<br><strong>2nd source: </strong>", dff$Sec_Source,
+                  "<br><strong>Final narrative: </strong>", dff$Final_Narrative),
+                weight = 0.4, color="#388e1b", stroke = TRUE, fillOpacity = 0.6) 
+
+```
+
+#### By amputation
+```{r warning = FALSE, fig.height=6, fig.align = 'default', out.width="100%"}
+dfa <- df %>% filter(!is.na(Longitude), !is.na(Latitude), Injury== "Amputations")
+  leaflet() %>%
+    addTiles('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+    attribution='Map tiles by <a href="http://stamen.com">Stamen Design</a>,
+      <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>
+      &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>') %>%
+    setView(-95, 35, zoom= 4) %>%  
+    addCircles(data= dfa, lat= ~Latitude, lng = ~Longitude,
+                popup=paste(
+                  "<strong>Date: </strong>", dfa$EventDate,
+                  "<br><strong>Hospitalized #: </strong>", dfa$count_Hospitalized,
+                  "<br><strong>Amputation #: </strong>", dfa$count_Amputation,
+                  "<br><strong>Employer: </strong>", dfa$Employer,
+                  "<br><strong>City: </strong>", dfa$City,
+                  "<br><strong>Injury: </strong>", dfa$Injury,
+                  "<br><strong>Body part: </strong>", dfa$Part_of_Body,
+                  "<br><strong>Event: </strong>", dfa$Event,
+                  "<br><strong>Source: </strong>", dfa$Source,
+                  "<br><strong>2nd source: </strong>", dfa$Sec_Source,
+                  "<br><strong>Final narrative: </strong>", dfa$Final_Narrative),
+                weight = 0.4, color="orange", stroke = TRUE, fillOpacity = 0.6)
+```
+
+
+#### By brain injuries
+```{r warning = FALSE, fig.height=6, fig.align = 'default', out.width="100%"}
+dfb <- df %>% filter(!is.na(Longitude), !is.na(Latitude), Part_of_Body== "Brain")
+  leaflet() %>%
+    addTiles('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+    attribution='Map tiles by <a href="http://stamen.com">Stamen Design</a>,
+      <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>
+      &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>') %>%
+    setView(-95, 35, zoom= 4) %>%  
+    addCircles(data= dfb, lat= ~Latitude, lng = ~Longitude,
+                popup=paste(
+                  "<strong>Date: </strong>", dfb$EventDate,
+                  "<br><strong>Hospitalized #: </strong>", dfb$count_Hospitalized,
+                  "<br><strong>Amputation #: </strong>", dfb$count_Amputation,
+                  "<br><strong>Employer: </strong>", dfb$Employer,
+                  "<br><strong>City: </strong>", dfb$City,
+                  "<br><strong>Injury: </strong>", dfb$Injury,
+                  "<br><strong>Body part: </strong>", dfb$Part_of_Body,
+                  "<br><strong>Event: </strong>", dfb$Event,
+                  "<br><strong>Source: </strong>", dfb$Source,
+                  "<br><strong>2nd source: </strong>", dfb$Sec_Source,
+                  "<br><strong>Final narrative: </strong>", dfb$Final_Narrative),
+                weight = 0.8, color="dodgerblue", stroke = TRUE, fillOpacity = 0.6)
+```
+
+#### Tricks/ help text
+Leaflet library is super cool when you need to plot geographic coordinates on plot. It is also possible to add more details/ text to all the points. For example, "popup=paste()" argument is used in this script to add specific details about coordinate. When user clicks on the point, it will pop up and show details as defined in the script. 
+
+###Most danagerous cities for workers {.tabset .tabset-fade .tabset-pills}
+
+Based on number of hospitalization and amputation counts from 2015 onward:
+```{r}
+p3 <- df %>%
+    group_by(City, count_Hospitalized) %>%
+    filter(count_Hospitalized != 0) %>%
+    summarize(count = n()) %>%
+    arrange(desc(count)) %>%
+    head(10) %>%
+  hchart("column", hcaes(x = City, y = count)) %>%
+  hc_legend(enabled = TRUE) %>% 
+  hc_add_theme(hc_theme_538()) %>% 
+  hc_title(text = "Top 10 most dangerous cities for workers (# hospitalized | 2015 onwards)") %>%
+  hc_credits(enabled = TRUE, text = "Sources: Occupational Safety and Health Administration aka OSHA", 
+             style = list(fontSize = "10px")) 
+
+p4 <- df %>%
+    group_by(City, count_Amputation) %>%
+    filter(count_Amputation != 0) %>%
+    summarize(count = n()) %>%
+    arrange(desc(count)) %>%
+    head(10) %>%
+  hchart("column", hcaes(x = City, y = count)) %>%
+  hc_legend(enabled = TRUE) %>% 
+  hc_add_theme(hc_theme_ffx()) %>% 
+  hc_title(text = "Top 10 most dangerous cities for workers (# amputated | 2015 onwards)") %>%
+  hc_credits(enabled = TRUE, text = "Sources: Occupational Safety and Health Administration aka OSHA", 
+             style = list(fontSize = "10px")) 
+
+```
+
+####By hospitalization
+```{r}
+p3
+df %>%
+    group_by(City, count_Hospitalized) %>%
+    filter(count_Hospitalized != 0) %>%
+    summarize(count = n()) %>%
+    arrange(desc(count)) %>%
+  datatable(style="bootstrap", class="table-condensed", options = list(dom = 'tp', pageLength = 5))
+```
+
+####By amputation
+```{r}
+p4
+df %>%
+    group_by(City, count_Amputation) %>%
+    filter(count_Amputation != 0) %>%
+    summarize(count = n()) %>%
+    arrange(desc(count)) %>% 
+  datatable(style="bootstrap", class="table-condensed", options = list(dom = 'tp', pageLength = 5))
+```
+
+###Most danagerous States for workers {.tabset .tabset-fade .tabset-pills}
+
+Based on number of hospitalization and amputation counts from 2015 onward:
+```{r}
+p1 <-df %>%
+  group_by(State, count_Hospitalized) %>%
+  filter(count_Hospitalized != 0) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  head(10) %>%
+  plot_ly(labels = ~State, values = ~count) %>%
+  add_pie(hole = 0.5) %>%
+  layout(title = "Top 10 most dangerous states for workers (# hospitalized | 2015 onwards)",
+         showlegend = T, legend = list(orientation = 'v'),
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
+p2 <- df %>%
+  group_by(State, count_Amputation) %>%
+  filter(count_Amputation != 0) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  head(10) %>%
+  plot_ly(labels = ~State, values = ~count) %>%
+  add_pie(hole = 0.5) %>%
+  layout(title = "Top 10 most dangerous states for workers (# amputated | 2015 onwards)", 
+         showlegend = T, legend = list(orientation = 'v'),
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
+```
+
+####By hospitalization
+```{r, fig.align="center", fig.height= 4}
+p1 
+df %>%
+    group_by(State, count_Hospitalized) %>%
+    filter(count_Hospitalized != 0) %>%
+    summarize(count = n()) %>%
+    arrange(desc(count)) %>%
+  datatable(style="bootstrap", class="table-condensed", options = list(dom = 'tp', pageLength = 5))
+```
+
+####By amputation
+```{r, fig.align="center", fig.height= 4}
+p2
+df %>%
+    group_by(State, count_Amputation) %>%
+    filter(count_Amputation != 0) %>%
+    summarize(count = n()) %>%
+    arrange(desc(count)) %>%
+  datatable(style="bootstrap", class="table-condensed", options = list(dom = 'tp', pageLength = 5))
+```
+
+###Timeseries data {.tabset .tabset-fade .tabset-pills}
+
+#### Rate of injuries by time
+Default range: 6 months (2016-08-27 to 2017-02-28)
+```{r fig.height=7, fig.align="left"}
+highchart(type = "stock") %>% 
+  hc_title(text = "Hospitalization and Amputation rate by time") %>% 
+  hc_subtitle(text = "Workers injury data from 2015 onward") %>% 
+  hc_tooltip(valueDecimals = 2) %>% 
+  hc_add_series_times_values(df$EventDate,
+                             df$count_Hospitalized,
+                             name = "Hospitalization") %>% 
+  hc_add_series_times_values(df$EventDate,
+                             df$count_Amputation,
+                             name = "Amputation") %>% 
+  hc_rangeSelector(selected = 2) %>%
+  hc_add_theme(hc_theme_db())
+
+```
+
+#### By Body part
+ 
+```{r warning = FALSE, message=FALSE, fig.height=10, out.width="100%"}
+df %>%
+    filter(count_Hospitalized != 0 || count_Amputation != 0) %>%
+    mutate(Part_of_Body = factor(Part_of_Body, levels=unique(Part_of_Body))) %>%
+    group_by(EventDate, Part_of_Body) %>%
+    summarize(total = n()) %>% arrange(desc(total)) %>% filter(total >=3) %>%
+  ggplot()+
+    geom_count(aes(x= EventDate, y = total, color = Part_of_Body, group = Part_of_Body, size= total)) +
+    #geom_smooth(aes(x= EventDate, y = total, color = Part_of_Body, group = Part_of_Body)) +
+    facet_wrap(~ Part_of_Body,  ncol = 4)+
+    ggtitle("Trend in number of Workers Hospitalized by Time and Part of Body | count >= 3 a day")+ 
+    labs(x="Time line",y="Number of workers injured", color = "Part_of_Body") + 
+    theme(strip.text.x = element_text(size= 6, face = "bold", colour = "steelblue4"), 
+          axis.text.x = element_text(angle = 30, hjust = 1, size = 6), 
+          axis.text.y = element_text(size = 6), 
+          legend.title = element_text(face = "bold"), 
+          plot.title = element_text(size=10),
+          legend.position = "none"
+          ) 
+```
+
+#### By injury type
+ 
+```{r warning = FALSE, message=FALSE, fig.height=10, out.width="100%"}
+df %>%
+    filter(count_Hospitalized != 0 || count_Amputation != 0) %>%
+    mutate(Injury = factor(Injury, levels=unique(Injury))) %>%
+    group_by(EventDate, Injury) %>%
+    summarize(total = n()) %>% arrange(desc(total)) %>% filter(total >=2) %>%
+  ggplot()+
+    geom_count(aes(x= EventDate, y = total, color = Injury, group = Injury, size= total)) +
+    #geom_smooth(aes(x= EventDate, y = total, color = Part_of_Body, group = Part_of_Body)) +
+    facet_wrap(~ Injury,  ncol = 4)+
+    ggtitle("Trend in number of Workers Hospitalized by Time and Injury | count >= 2 a day")+ 
+    labs(x="Time line",y="Number of workers injured", color = "Injury") + 
+    theme(strip.text.x = element_text(size= 6, face = "bold", colour = "steelblue4"), 
+          axis.text.x = element_text(angle = 30, hjust = 1, size = 6), 
+          axis.text.y = element_text(size = 6), 
+          legend.title = element_text(face = "bold"),
+          plot.title = element_text(size=10),
+          legend.position = "none"
+          ) 
+```
+
+
+
+##Final thoughts
+
+- More data could add more meaning while comparing by numbers. For example, USPS is a big organization and for such a big organization, percentage of reported number of injuries would be quite small. Same way, higher number of industries in specific location also makes sense to have higher number of injuries. 
+
+- dplyr package is pretty handy to pipe the complete flow and works very well with visualization libraries such as highcharter, leaflet, plotly and ggplot. Please check "Tricks/ help text" tab for some more tricks.
+
+- In terms of constraints, Employer column needs heavy text mining to completely clean and make unique employer name. 
+
+<br>
+And, at this point, I would like to say thank you for your time spent and interest taken in reading this report. I would highly appreciate any comment, feedback or recommendation regarding coding, visualization or any aspect of this report.
+Also, if you like the kernel, please do upvote and make me happy. :) 
