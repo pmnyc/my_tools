@@ -170,3 +170,90 @@ from
       from demo_shape_linestring limit 1) b
 limit 1;
 
+
+########################################################################################################
+########################################################################################################
+########################################################################################################
+########################################################################################################
+// ANOTHER VERSION
+# bash shell
+# https://github.com/Esri/gis-tools-for-hadoop
+git clone https://github.com/Esri/gis-tools-for-hadoop.git
+
+
+# launch hive shell
+add jar
+   gis-tools-for-hadoop/samples/lib/esri-geometry-api.jar
+   gis-tools-for-hadoop/samples/lib/spatial-sdk-hadoop.jar;
+create temporary function ST_Point as 'com.esri.hadoop.hive.ST_Point';
+create temporary function ST_Contains as 'com.esri.hadoop.hive.ST_Contains';
+create temporary function ST_Bin as 'com.esri.hadoop.hive.ST_Bin';
+create temporary function ST_BinEnvelope as 'com.esri.hadoop.hive.ST_BinEnvelope';
+
+CREATE TABLE IF NOT EXISTS earthquakes (earthquake_date STRING, latitude DOUBLE, longitude DOUBLE, magnitude DOUBLE)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ',';
+LOAD DATA INPATH 'hdfs:///user/hive/earthquakedata/earthquakes.csv' OVERWRITE INTO TABLE earthquakes;
+
+CREATE TABLE earthquakes_new(earthquake_date STRING, latitude DOUBLE, longitude DOUBLE, magnitude DOUBLE);
+INSERT OVERWRITE TABLE earthquakes_new
+SELECT earthquake_date, latitude, longitude, magnitude
+FROM earthquakes
+WHERE latitude is not null;
+
+DROP TABLE agg_samp if exists;
+CREATE TABLE agg_samp(area binary, count double)
+ROW FORMAT SERDE 'com.esri.hadoop.hive.serde.JsonSerde'
+STORED AS INPUTFORMAT 'com.esri.json.hadoop.EnclosedJsonInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat';
+
+# create the parquet table and files
+DROP TABLE agg_samp2 if exists;
+CREATE TABLE agg_samp2(area binary, count double)
+STORED AS PARQUET;
+
+FROM (SELECT ST_Bin(0.5, ST_Point(longitude, latitude)) bin_id, * FROM earthquakes_new) bins
+INSERT OVERWRITE TABLE agg_samp
+SELECT ST_BinEnvelope(0.5, bin_id) shape, count(*) count
+GROUP BY bin_id;
+
+FROM (SELECT ST_Bin(0.5, ST_Point(longitude, latitude)) bin_id, * FROM earthquakes_new) bins
+INSERT OVERWRITE TABLE agg_samp2
+SELECT ST_BinEnvelope(0.5, bin_id) shape, count(*) count
+GROUP BY bin_id;
+
+
+
+
+SELECT bin_id, count(*) count
+FROM (SELECT ST_Bin(0.5, ST_Point(longitude, latitude)) bin_id, * FROM earthquakes_new) bins
+GROUP BY bin_id;
+
+
+##########################
+hadoop fs -mkdir earthquake-demo
+hadoop fs -put gis-tools-for-hadoop/samples/data/counties-data earthquake-demo
+hadoop fs -put gis-tools-for-hadoop/samples/data/earthquake-data earthquake-demo
+
+# HIVE SHELL
+add jar
+    ${env:HOME}/gis-tools-for-hadoop/samples/lib/esri-geometry-api.jar
+    ${env:HOME}/gis-tools-for-hadoop/samples/lib/spatial-sdk-hadoop.jar;
+
+create temporary function ST_Point as 'com.esri.hadoop.hive.ST_Point';
+create temporary function ST_Contains as 'com.esri.hadoop.hive.ST_Contains';
+
+
+drop table if exists earthquakes;
+CREATE TABLE earthquakes (earthquake_date STRING, latitude DOUBLE, longitude DOUBLE, depth DOUBLE, magnitude DOUBLE,
+    magtype string, mbstations string, gap string, distance string, rms string, source string, eventid string)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+drop table if exists counties;
+CREATE EXTERNAL TABLE IF NOT EXISTS counties (Area string, Perimeter string, State string, County string, Name string, BoundaryShape binary)
+ROW FORMAT SERDE 'com.esri.hadoop.hive.serde.EsriJsonSerDe'
+STORED AS INPUTFORMAT 'com.esri.json.hadoop.EnclosedEsriJsonInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION '${env:HOME}/gis-tools-for-hadoop/samples/data/counties-data';
+
+
