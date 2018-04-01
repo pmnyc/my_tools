@@ -21,19 +21,23 @@ Before you run the sample, you must register your device as described in the
 README in the parent folder.
 """
 
+# [START iot_http_includes]
 import argparse
 import base64
 import datetime
 import json
 import time
 
+from google.api_core import retry
 import jwt
 import requests
+# [END iot_http_includes]
+
+_BASE_URL = 'https://cloudiotdevice.googleapis.com/v1'
+_BACKOFF_DURATION = 60
 
 
-_BASE_URL = 'https://cloudiot-device.googleapis.com/v1beta1'
-
-
+# [START iot_http_jwt]
 def create_jwt(project_id, private_key_file, algorithm):
     token = {
             # The time the token was issued.
@@ -51,9 +55,14 @@ def create_jwt(project_id, private_key_file, algorithm):
     print('Creating JWT using {} from private key file {}'.format(
             algorithm, private_key_file))
 
-    return jwt.encode(token, private_key, algorithm=algorithm)
+    return jwt.encode(token, private_key, algorithm=algorithm).decode('ascii')
+# [END iot_http_jwt]
 
 
+@retry.Retry(
+    predicate=retry.if_exception_type(AssertionError),
+    deadline=_BACKOFF_DURATION)
+# [START iot_http_publish]
 def publish_message(
         message, message_type, base_url, project_id, cloud_region, registry_id,
         device_id, jwt_token):
@@ -72,17 +81,51 @@ def publish_message(
             url_suffix)
 
     body = None
+    msg_bytes = base64.urlsafe_b64encode(message.encode('utf-8'))
     if message_type == 'event':
-        body = {'binary_data': base64.urlsafe_b64encode(message)}
+        body = {'binary_data': msg_bytes.decode('ascii')}
     else:
         body = {
-          'state': {'binary_data': base64.urlsafe_b64encode(message)}
+          'state': {'binary_data': msg_bytes.decode('ascii')}
         }
 
     resp = requests.post(
             publish_url, data=json.dumps(body), headers=headers)
 
+    if (resp.status_code != 200):
+        print('Response came back {}, retrying'.format(resp.status_code))
+        raise AssertionError('Not OK response: {}'.format(resp.status_code))
+
     return resp
+# [END iot_http_publish]
+
+
+@retry.Retry(
+    predicate=retry.if_exception_type(AssertionError),
+    deadline=_BACKOFF_DURATION)
+# [START iot_http_getconfig]
+def get_config(
+        version, message_type, base_url, project_id, cloud_region, registry_id,
+        device_id, jwt_token):
+    headers = {
+            'authorization': 'Bearer {}'.format(jwt_token),
+            'content-type': 'application/json',
+            'cache-control': 'no-cache'
+    }
+
+    basepath = '{}/projects/{}/locations/{}/registries/{}/devices/{}/'
+    template = basepath + 'config?local_version={}'
+    config_url = template.format(
+        base_url, project_id, cloud_region, registry_id, device_id, version)
+
+    resp = requests.get(config_url, headers=headers)
+
+    if (resp.status_code != 200):
+        print('Error getting config: {}, retrying'.format(resp.status_code))
+        raise AssertionError('Not OK response: {}'.format(resp.status_code))
+
+    return resp
+# [END iot_http_getconfig]
 
 
 def parse_command_line_args():
@@ -135,6 +178,7 @@ def parse_command_line_args():
     return parser.parse_args()
 
 
+# [START iot_http_run]
 def main():
     args = parse_command_line_args()
 
@@ -142,6 +186,10 @@ def main():
             args.project_id, args.private_key_file, args.algorithm)
     jwt_iat = datetime.datetime.utcnow()
     jwt_exp_mins = args.jwt_expires_minutes
+
+    print('Latest configuration: {}'.format(get_config(
+        '0', args.message_type, args.base_url, args.project_id,
+        args.cloud_region, args.registry_id, args.device_id, jwt_token).text))
 
     # Publish num_messages mesages to the HTTP bridge once per second.
     for i in range(1, args.num_messages + 1):
@@ -167,6 +215,7 @@ def main():
         # Send events every second. State should not be updated as often
         time.sleep(1 if args.message_type == 'event' else 5)
     print('Finished.')
+# [END iot_http_run]
 
 
 if __name__ == '__main__':

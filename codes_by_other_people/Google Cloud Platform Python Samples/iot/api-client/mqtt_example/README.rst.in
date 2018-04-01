@@ -1,7 +1,7 @@
 # This file is used to generate README.rst
 
 product:
-  name: Google Cloud IoT Core API
+  name: Google Cloud IoT Core
   short_name: Cloud IoT Core
   url: https://cloud.google.com/iot/docs
   description: >
@@ -9,11 +9,16 @@ product:
     Subscribe functionality with devices and programmatically manage device
     authorization.
 
-    The following example runs the sample using the project ID `blue-jet-123`
-    and the device name `my-python-device`:
+    Before you run the sample, you must retrieve the Google root certificate.
+    For example, ``wget https://pki.goog/roots.pem`` or
+    ``curl https://pki.goog/roots.pem > roots.pem``.
+
+    The following example runs the sample using the project ID ``blue-jet-123``
+    and the device name ``my-python-device``::
 
         python cloudiot_mqtt_example.py \
             --registry_id=my-registry \
+            --cloud_region=us-central1 \
             --project_id=blue-jet-123 \
             --device_id=my-python-device \
             --algorithm=RS256 \
@@ -28,3 +33,5 @@ samples:
   show_help: True
 
 cloud_client_library: false
+
+folder: iot/api-client/mqtt_example

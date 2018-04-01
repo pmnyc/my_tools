@@ -25,6 +25,7 @@ import subscriber
 PROJECT = os.environ['GCLOUD_PROJECT']
 TOPIC = 'subscription-test-topic'
 SUBSCRIPTION = 'subscription-test-subscription'
+ENDPOINT = 'https://{}.appspot.com/push'.format(PROJECT)
 
 
 @pytest.fixture(scope='module')
@@ -97,6 +98,21 @@ def test_create(subscriber_client):
         assert subscriber_client.get_subscription(subscription_path)
 
 
+def test_create_push(subscriber_client):
+    subscription_path = subscriber_client.subscription_path(
+        PROJECT, SUBSCRIPTION)
+    try:
+        subscriber_client.delete_subscription(subscription_path)
+    except Exception:
+        pass
+
+    subscriber.create_push_subscription(PROJECT, TOPIC, SUBSCRIPTION, ENDPOINT)
+
+    @eventually_consistent.call
+    def _():
+        assert subscriber_client.get_subscription(subscription_path)
+
+
 def test_delete(subscriber_client, subscription):
     subscriber.delete_subscription(PROJECT, SUBSCRIPTION)
 
@@ -111,6 +127,11 @@ def _publish_messages(publisher_client, topic):
         data = u'Message {}'.format(n).encode('utf-8')
         publisher_client.publish(
             topic, data=data)
+
+
+def _publish_messages_with_custom_attributes(publisher_client, topic):
+    data = u'Test message'.encode('utf-8')
+    publisher_client.publish(topic, data=data, origin='python-sample')
 
 
 def _make_sleep_patch():
@@ -137,6 +158,22 @@ def test_receive(publisher_client, topic, subscription, capsys):
     assert 'Listening' in out
     assert subscription in out
     assert 'Message 1' in out
+
+
+def test_receive_with_custom_attributes(
+        publisher_client, topic, subscription, capsys):
+    _publish_messages_with_custom_attributes(publisher_client, topic)
+
+    with _make_sleep_patch():
+        with pytest.raises(RuntimeError, match='sigil'):
+            subscriber.receive_messages_with_custom_attributes(
+                PROJECT, SUBSCRIPTION)
+
+    out, _ = capsys.readouterr()
+    assert 'Test message' in out
+    assert 'Attributes' in out
+    assert 'origin' in out
+    assert 'python-sample' in out
 
 
 def test_receive_with_flow_control(

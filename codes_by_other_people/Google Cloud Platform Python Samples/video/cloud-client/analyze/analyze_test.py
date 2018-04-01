@@ -15,13 +15,14 @@
 # limitations under the License.
 
 import os
+
 import pytest
+
 import analyze
 
 
 BUCKET = os.environ['CLOUD_STORAGE_BUCKET']
 LABELS_FILE_PATH = '/video/cat.mp4'
-FACES_FILE_PATH = '/video/googlework.mp4'
 EXPLICIT_CONTENT_FILE_PATH = '/video/cat.mp4'
 SHOTS_FILE_PATH = '/video/gbikes_dinosaur.mp4'
 
@@ -32,14 +33,6 @@ def test_analyze_shots(capsys):
         'gs://{}{}'.format(BUCKET, SHOTS_FILE_PATH))
     out, _ = capsys.readouterr()
     assert 'Shot 1:' in out
-
-
-@pytest.mark.slow
-def test_analyze_faces(capsys):
-    analyze.analyze_faces(
-        'gs://{}{}'.format(BUCKET, FACES_FILE_PATH))
-    out, _ = capsys.readouterr()
-    assert 'Thumbnail' in out
 
 
 @pytest.mark.slow

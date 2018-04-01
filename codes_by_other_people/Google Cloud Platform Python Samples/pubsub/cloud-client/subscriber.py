@@ -29,11 +29,11 @@ from google.cloud import pubsub_v1
 
 def list_subscriptions_in_topic(project, topic_name):
     """Lists all subscriptions for a given topic."""
-    subscriber = pubsub_v1.SubscriberClient()
+    subscriber = pubsub_v1.PublisherClient()
     topic_path = subscriber.topic_path(project, topic_name)
 
-    for subscription in subscriber.list_subscriptions(topic_path):
-        print(subscription.name)
+    for subscription in subscriber.list_topic_subscriptions(topic_path):
+        print(subscription)
 
 
 def list_subscriptions_in_project(project):
@@ -58,6 +58,29 @@ def create_subscription(project, topic_name, subscription_name):
     print('Subscription created: {}'.format(subscription))
 
 
+def create_push_subscription(project,
+                             topic_name,
+                             subscription_name,
+                             endpoint):
+    """Create a new push subscription on the given topic.
+    For example, endpoint is
+    "https://my-test-project.appspot.com/push".
+    """
+    subscriber = pubsub_v1.SubscriberClient()
+    topic_path = subscriber.topic_path(project, topic_name)
+    subscription_path = subscriber.subscription_path(
+        project, subscription_name)
+
+    push_config = pubsub_v1.types.PushConfig(
+        push_endpoint=endpoint)
+
+    subscription = subscriber.create_subscription(
+        subscription_path, topic_path, push_config)
+
+    print('Push subscription created: {}'.format(subscription))
+    print('Endpoint for subscription is: {}'.format(endpoint))
+
+
 def delete_subscription(project, subscription_name):
     """Deletes an existing Pub/Sub topic."""
     subscriber = pubsub_v1.SubscriberClient()
@@ -69,6 +92,38 @@ def delete_subscription(project, subscription_name):
     print('Subscription deleted: {}'.format(subscription_path))
 
 
+def update_subscription(project, subscription_name, endpoint):
+    """
+    Updates an existing Pub/Sub subscription's push endpoint URL.
+    Note that certain properties of a subscription, such as
+    its topic, are not modifiable. For example, endpoint is
+    "https://my-test-project.appspot.com/push".
+    """
+    subscriber = pubsub_v1.SubscriberClient()
+    subscription_path = subscriber.subscription_path(
+        project, subscription_name)
+
+    push_config = pubsub_v1.types.PushConfig(
+        push_endpoint=endpoint)
+
+    subscription = pubsub_v1.types.Subscription(
+        name=subscription_path,
+        push_config=push_config)
+
+    update_mask = {
+        'paths': {
+            'push_config',
+        }
+    }
+
+    subscriber.update_subscription(subscription, update_mask)
+    result = subscriber.get_subscription(subscription_path)
+
+    print('Subscription updated: {}'.format(subscription_path))
+    print('New endpoint for subscription is: {}'.format(
+        result.push_config))
+
+
 def receive_messages(project, subscription_name):
     """Receives messages from a pull subscription."""
     subscriber = pubsub_v1.SubscriberClient()
@@ -77,6 +132,30 @@ def receive_messages(project, subscription_name):
 
     def callback(message):
         print('Received message: {}'.format(message))
+        message.ack()
+
+    subscriber.subscribe(subscription_path, callback=callback)
+
+    # The subscriber is non-blocking, so we must keep the main thread from
+    # exiting to allow it to process messages in the background.
+    print('Listening for messages on {}'.format(subscription_path))
+    while True:
+        time.sleep(60)
+
+
+def receive_messages_with_custom_attributes(project, subscription_name):
+    """Receives messages from a pull subscription."""
+    subscriber = pubsub_v1.SubscriberClient()
+    subscription_path = subscriber.subscription_path(
+        project, subscription_name)
+
+    def callback(message):
+        print('Received message: {}'.format(message.data))
+        if message.attributes:
+            print('Attributes:')
+            for key in message.attributes:
+                value = message.attributes.get(key)
+                print('{}: {}'.format(key, value))
         message.ack()
 
     subscriber.subscribe(subscription_path, callback=callback)
@@ -110,6 +189,29 @@ def receive_messages_with_flow_control(project, subscription_name):
         time.sleep(60)
 
 
+def listen_for_errors(project, subscription_name):
+    """Receives messages and catches errors from a pull subscription."""
+    subscriber = pubsub_v1.SubscriberClient()
+    subscription_path = subscriber.subscription_path(
+        project, subscription_name)
+
+    def callback(message):
+        print('Received message: {}'.format(message))
+        message.ack()
+
+    subscription = subscriber.subscribe(subscription_path, callback=callback)
+
+    # Blocks the thread while messages are coming in through the stream. Any
+    # exceptions that crop up on the thread will be set on the future.
+    try:
+        subscription.future.result()
+    except Exception as e:
+        print(
+            'Listening for messages on {} threw an Exception: {}.'.format(
+                subscription_name, e))
+        raise
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -130,18 +232,38 @@ if __name__ == '__main__':
     create_parser.add_argument('topic_name')
     create_parser.add_argument('subscription_name')
 
+    create_push_parser = subparsers.add_parser(
+        'create-push', help=create_push_subscription.__doc__)
+    create_push_parser.add_argument('topic_name')
+    create_push_parser.add_argument('subscription_name')
+    create_push_parser.add_argument('endpoint')
+
     delete_parser = subparsers.add_parser(
         'delete', help=delete_subscription.__doc__)
     delete_parser.add_argument('subscription_name')
+
+    update_parser = subparsers.add_parser(
+        'update', help=update_subscription.__doc__)
+    update_parser.add_argument('subscription_name')
+    update_parser.add_argument('endpoint')
 
     receive_parser = subparsers.add_parser(
         'receive', help=receive_messages.__doc__)
     receive_parser.add_argument('subscription_name')
 
+    receive_with_custom_attributes_parser = subparsers.add_parser(
+        'receive-custom-attributes',
+        help=receive_messages_with_custom_attributes.__doc__)
+    receive_with_custom_attributes_parser.add_argument('subscription_name')
+
     receive_with_flow_control_parser = subparsers.add_parser(
         'receive-flow-control',
         help=receive_messages_with_flow_control.__doc__)
     receive_with_flow_control_parser.add_argument('subscription_name')
+
+    listen_for_errors_parser = subparsers.add_parser(
+        'listen_for_errors', help=listen_for_errors.__doc__)
+    listen_for_errors_parser.add_argument('subscription_name')
 
     args = parser.parse_args()
 
@@ -152,11 +274,25 @@ if __name__ == '__main__':
     elif args.command == 'create':
         create_subscription(
             args.project, args.topic_name, args.subscription_name)
+    elif args.command == 'create-push':
+        create_push_subscription(
+            args.project,
+            args.topic_name,
+            args.subscription_name,
+            args.endpoint)
     elif args.command == 'delete':
         delete_subscription(
             args.project, args.subscription_name)
+    elif args.command == 'update':
+        update_subscription(
+            args.project, args.subscription_name, args.endpoint)
     elif args.command == 'receive':
         receive_messages(args.project, args.subscription_name)
+    elif args.command == 'receive-custom-attributes':
+        receive_messages_with_custom_attributes(
+            args.project, args.subscription_name)
     elif args.command == 'receive-flow-control':
         receive_messages_with_flow_control(
             args.project, args.subscription_name)
+    elif args.command == 'listen_for_errors':
+        listen_for_errors(args.project, args.subscription_name)

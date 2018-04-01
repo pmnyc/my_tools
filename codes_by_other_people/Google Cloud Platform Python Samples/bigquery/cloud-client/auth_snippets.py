@@ -35,14 +35,13 @@ def explicit():
 
     # Explicitly use service account credentials by specifying the private key
     # file. All clients in google-cloud-python have this helper, see
-    # https://google-cloud-python.readthedocs.io/en/latest/core/modules.html
-    #   #google.cloud.client.Client.from_service_account_json
+    # https://googlecloudplatform.github.io/google-cloud-python/latest/core/auth.html#service-accounts
     bigquery_client = bigquery.Client.from_service_account_json(
         'service_account.json')
 
     # Make an authenticated API request
-    buckets = list(bigquery_client.list_datasets())
-    print(buckets)
+    datasets = list(bigquery_client.list_datasets())
+    print(datasets)
 
 
 if __name__ == '__main__':

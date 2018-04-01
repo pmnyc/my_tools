@@ -18,6 +18,7 @@ the Google Cloud Client Libraries."""
 import argparse
 
 
+# [START auth_cloud_implicit]
 def implicit():
     from google.cloud import storage
 
@@ -28,23 +29,25 @@ def implicit():
     # Make an authenticated API request
     buckets = list(storage_client.list_buckets())
     print(buckets)
+# [END auth_cloud_implicit]
 
 
+# [START auth_cloud_explicit]
 def explicit():
     from google.cloud import storage
 
     # Explicitly use service account credentials by specifying the private key
-    # file. All clients in google-cloud-python have this helper, see
-    # https://google-cloud-python.readthedocs.io/en/latest/core/modules.html
-    #   #google.cloud.client.Client.from_service_account_json
+    # file.
     storage_client = storage.Client.from_service_account_json(
         'service_account.json')
 
     # Make an authenticated API request
     buckets = list(storage_client.list_buckets())
     print(buckets)
+# [END auth_cloud_explicit]
 
 
+# [START auth_cloud_explicit_compute_engine]
 def explicit_compute_engine(project):
     from google.auth import compute_engine
     from google.cloud import storage
@@ -59,6 +62,7 @@ def explicit_compute_engine(project):
     # Make an authenticated API request
     buckets = list(storage_client.list_buckets())
     print(buckets)
+# [END auth_cloud_explicit_compute_engine]
 
 
 if __name__ == '__main__':

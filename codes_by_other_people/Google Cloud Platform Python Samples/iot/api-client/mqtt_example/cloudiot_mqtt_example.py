@@ -21,13 +21,26 @@ Before you run the sample, you must follow the instructions in the README
 for this sample.
 """
 
+# [START iot_mqtt_includes]
 import argparse
 import datetime
 import os
+import random
+import ssl
 import time
 
 import jwt
 import paho.mqtt.client as mqtt
+# [END iot_mqtt_includes]
+
+# The initial backoff time after a disconnection occurs, in seconds.
+minimum_backoff_time = 1
+
+# The maximum backoff time before giving up, in seconds.
+MAXIMUM_BACKOFF_TIME = 32
+
+# Whether to wait with exponential backoff before publishing.
+should_backoff = False
 
 
 # [START iot_mqtt_jwt]
@@ -76,15 +89,33 @@ def on_connect(unused_client, unused_userdata, unused_flags, rc):
     """Callback for when a device connects."""
     print('on_connect', mqtt.connack_string(rc))
 
+    # After a successful connect, reset backoff time and stop backing off.
+    global should_backoff
+    global minimum_backoff_time
+    should_backoff = False
+    minimum_backoff_time = 1
+
 
 def on_disconnect(unused_client, unused_userdata, rc):
     """Paho callback for when a device disconnects."""
     print('on_disconnect', error_str(rc))
 
+    # Since a disconnect occurred, the next loop iteration will wait with
+    # exponential backoff.
+    global should_backoff
+    should_backoff = True
+
 
 def on_publish(unused_client, unused_userdata, unused_mid):
     """Paho callback when a message is sent to the broker."""
     print('on_publish')
+
+
+def on_message(unused_client, unused_userdata, message):
+    """Callback when the device receives a message on a subscription."""
+    payload = str(message.payload)
+    print('Received message \'{}\' on topic \'{}\' with Qos {}'.format(
+            payload, message.topic, str(message.qos)))
 
 
 def get_client(
@@ -108,7 +139,7 @@ def get_client(
                     project_id, private_key_file, algorithm))
 
     # Enable SSL/TLS support.
-    client.tls_set(ca_certs=ca_certs)
+    client.tls_set(ca_certs=ca_certs, tls_version=ssl.PROTOCOL_TLSv1_2)
 
     # Register message callbacks. https://eclipse.org/paho/clients/python/docs/
     # describes additional callbacks that Paho supports. In this example, the
@@ -116,12 +147,16 @@ def get_client(
     client.on_connect = on_connect
     client.on_publish = on_publish
     client.on_disconnect = on_disconnect
+    client.on_message = on_message
 
     # Connect to the Google MQTT bridge.
     client.connect(mqtt_bridge_hostname, mqtt_bridge_port)
 
-    # Start the network loop.
-    client.loop_start()
+    # This is the topic that the device will receive configuration updates on.
+    mqtt_config_topic = '/devices/{}/config'.format(device_id)
+
+    # Subscribe to the config topic.
+    client.subscribe(mqtt_config_topic, qos=1)
 
     return client
 # [END iot_mqtt_config]
@@ -185,6 +220,8 @@ def parse_command_line_args():
 
 # [START iot_mqtt_run]
 def main():
+    global minimum_backoff_time
+
     args = parse_command_line_args()
 
     # Publish to the events or state topic based on the flag.
@@ -201,21 +238,38 @@ def main():
 
     # Publish num_messages mesages to the MQTT bridge once per second.
     for i in range(1, args.num_messages + 1):
+        # Process network events.
+        client.loop()
+
+        # Wait if backoff is required.
+        if should_backoff:
+            # If backoff time is too large, give up.
+            if minimum_backoff_time > MAXIMUM_BACKOFF_TIME:
+                print('Exceeded maximum backoff time. Giving up.')
+                break
+
+            # Otherwise, wait and connect again.
+            delay = minimum_backoff_time + random.randint(0, 1000) / 1000.0
+            print('Waiting for {} before reconnecting.'.format(delay))
+            time.sleep(delay)
+            minimum_backoff_time *= 2
+            client.connect(args.mqtt_bridge_hostname, args.mqtt_bridge_port)
+
         payload = '{}/{}-payload-{}'.format(
                 args.registry_id, args.device_id, i)
         print('Publishing message {}/{}: \'{}\''.format(
                 i, args.num_messages, payload))
+        # [START iot_mqtt_jwt_refresh]
         seconds_since_issue = (datetime.datetime.utcnow() - jwt_iat).seconds
         if seconds_since_issue > 60 * jwt_exp_mins:
             print('Refreshing token after {}s').format(seconds_since_issue)
-            client.loop_stop()
             jwt_iat = datetime.datetime.utcnow()
             client = get_client(
                 args.project_id, args.cloud_region,
                 args.registry_id, args.device_id, args.private_key_file,
                 args.algorithm, args.ca_certs, args.mqtt_bridge_hostname,
                 args.mqtt_bridge_port)
-
+        # [END iot_mqtt_jwt_refresh]
         # Publish "payload" to the MQTT topic. qos=1 means at least once
         # delivery. Cloud IoT Core also supports qos=0 for at most once
         # delivery.
@@ -224,8 +278,6 @@ def main():
         # Send events every second. State should not be updated as often
         time.sleep(1 if args.message_type == 'event' else 5)
 
-    # End the network loop and finish.
-    client.loop_stop()
     print('Finished.')
 # [END iot_mqtt_run]
 
