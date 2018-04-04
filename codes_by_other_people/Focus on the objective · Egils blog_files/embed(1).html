@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<!-- saved from url=(0084)https://imgur.com/0JyrJKz/embed?ref=https%3A%2F%2Fragulpr.github.io%2Fpage2%2F&w=540 -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="robots" content="follow, noindex">
+        <style type="text/css">
+            html, body {
+                height: 100%;
+            }
+            body {
+                background: white;
+                border: 1px #cccccc;
+                border-radius: 2px;
+                font-family: 'Open Sans', Arial, sans-serif;
+                color: #808080;
+                margin: 8px;
+                max-width: 540px;
+                -webkit-text-size-adjust: none;
+            }
+            a {
+                font-size: 12px;
+                text-decoration: none;
+                color: #4E76C9;
+            }
+            #app-container {
+                overflow: hidden;
+            }
+            #app-get {
+                color: #3bd142;
+                width: 85px;
+                float: right;
+                font-size: 13px;
+                padding: 2px 0 10px 0;
+            }
+            #app-android, #app-apple {
+                width: 12px;
+                height: 14px;
+                float: right;
+                display: inline-block;
+                padding-bottom: 10px;
+            }
+            #app-android {
+                background: url("//s.imgur.com/images/embed/android.png") no-repeat;
+                margin-right: 10px;
+            }
+            #app-apple {
+                background: url("//s.imgur.com/images/embed/apple.png") no-repeat;
+            }
+            @media only screen and (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+                #app-android {
+                    background: url("//s.imgur.com/images/embed/android@2x.png") no-repeat;
+                    background-size: 12px 14px;
+                }
+                 #app-apple {
+                    background: url("//s.imgur.com/images/embed/apple@2x.png") no-repeat;
+                    background-size: 12px 14px;
+                }
+            }
+            .image-link {
+                color: #e5e5e5;
+            }
+            .base-nav {
+                display: inline-block;
+                width: 100%;
+            }
+            .description {
+                font-size: 12px;
+                word-wrap: break-word;
+                margin: 0;
+                line-height: 16px;
+                padding-bottom: 5px;
+            }
+            .description a:hover, .account:hover {
+                text-decoration: underline;
+            }
+            .account {
+                display: inline-block;
+                max-width: 90px;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                vertical-align: bottom;
+            }
+            .meta-attr {
+                font-size: 12px;
+                vertical-align: bottom;
+            }
+            .image {
+                text-align: center;
+                margin: auto;
+                min-height: 200px;
+                position: relative;
+            }
+            .image-panel {
+                background-color: #f2f2f2;
+                border-radius: 2px;
+                overflow: hidden;
+            }
+            .logo {
+                height: 15px;
+                display: inline-block;
+                float: right;
+                position: relative;
+                top: 6px;
+            }
+            a.logo-container {
+                color: #ffffff;
+            }
+            .post {
+                display: inline-block;
+                vertical-align: middle;
+                width: 100%;
+                height: auto;
+                position: absolute;
+                top: 0;
+                right: 0;
+                left: 0;
+                bottom: 0;
+                margin: auto;
+            }
+            .title {
+                font-size: 18px;
+                font-weight: bold;
+                color: #4c4c4c;
+                display: block;
+                padding-bottom: 10px;
+                margin: 0;
+            }
+            .title-description {
+                padding-bottom: 5px;
+            }
+            .under-image {
+                padding: 12px;
+            }
+            .grey-text {
+                color: #808080;
+                vertical-align: bottom;
+                font-size: 12px;
+            }
+            .grey-text:hover{
+                text-decoration: underline;
+            }
+
+            .video-container {
+                display: inline;
+            }
+
+            @media screen and (min-width: 300px) and (max-width: 350px) {
+                .title {
+                    font-size: 16px;
+                }
+            }
+            @media screen and (max-width: 300px){
+                .image {
+                    min-height: 0;
+                }
+                .logo-container {
+                    display: block;
+                    width: 100%;
+                    margin-top: -6px;
+                    text-align: center;
+                }
+                .logo {
+                    float: none;
+                    margin-top: 10px;
+                    margin-bottom: 8px;
+                }
+            }
+        </style>
+        <script src="./rules-p-f8oruOqDFlMeI.js" async=""></script><script src="./quant.js" async="" type="text/javascript"></script><script async="" src="./beacon.js"></script><script type="text/javascript">
+            if (!String.prototype.trim) {
+                (function() {
+                    var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
+                    String.prototype.trim = function() {
+                        return this.replace(rtrim, '');
+                    };
+                })();
+            }
+
+            window.ImgurJafo = (function() {
+                var jafo    = new Object(),
+                    verDate = new Date();
+
+                window.clone = function(obj) {
+                    if(obj == null || typeof(obj) != 'object')
+                        return obj;
+
+                    var temp = obj.constructor();
+
+                    for(var key in obj) {
+                        if(obj.hasOwnProperty(key)) {
+                            temp[key] = clone(obj[key]);
+                        }
+                    }
+                    return temp;
+                };
+                jafo.isObject = function(obj) {
+                    return (obj !== null && typeof obj === 'object');
+                };
+
+                jafo.isString = function(str) {
+                    return (typeof str == 'string' || str instanceof String);
+                }
+
+                jafo._ = {
+                    attrBound: false,
+                    attrRegex: /^\s*({.+\})\s*?/,
+                    chrRegex: /\@\@/g,
+                    cookieOpts: {
+                        expires: 180
+                    },
+                    dataAttr: 'data-jafo',
+                    imgLoc: '//i.imgur.com/lumbar.gif',
+                    legacyQueue: [],
+                    lsArrayName: 'jafoData',
+                    lsAvail: false,
+                    lsKeyName: 'jafo-data',
+                    maxBatch: 2,
+                    pollDelay: 800,
+                    scheduled: null,
+                    selfRefRgx: /^([^:]+:)\/\/([^.]+\.)*imgur(-dev)?\.com(\/.*)?$/,
+                    sessionFired: false,
+                    uidCookie: 'IMGURUIDJAFO',
+                    userDetails: {
+                        UID: null,
+                        accountId: null,
+                        sessionId: null,
+                        platform: 'embed',
+                        source: 'frontend',
+                        referrer: '',
+                        userAgent: navigator.userAgent,
+                        version: verDate.getFullYear() + '.' + Math.ceil(verDate.getMonth()/3),
+                        host: window.location.host
+                    },
+                    el: {
+                        $body: document.body
+                    }
+                };
+
+                jafo.batch = function() {
+                    var aParm,
+                        iter,
+                        len = arguments.length,
+                        parms = [],
+                        sify;
+
+                    for(iter = 0; iter < len; iter++) {
+
+                        if(typeof arguments[iter] === 'object') {
+                            aParm = arguments[iter];
+
+                            if(jafo._isArr(aParm)) {
+                                aParm = aParm.pop();
+                            }
+                            sify = JSON.stringify(aParm);
+                            parms.push(jafo._parmLabel(iter)+'='+encodeURIComponent(sify));
+
+                        } else if(typeof arguments[iter] === 'string') {
+                            parms.push(jafo._parmLabel(iter)+'='+encodeURIComponent(arguments[iter]));
+                        }
+
+                    }
+
+                    return parms.join('&');
+                };
+
+                jafo._canUseLs = function() {
+                    try {
+                        localStorage.setItem('testitem', 0);
+                        localStorage.removeItem('testitem');
+                        return true;
+                    } catch(e) {
+                    }
+                    return false;
+                };
+
+                jafo._fire = function(url) {
+                    // no pixel setup? Forget it.
+                    if(!jafo._.imgLoc) {
+                        return;
+                    }
+                    var img = document.createElement('img');
+                    img.src = url;
+                };
+
+                jafo._fp = function() {
+                    var pFp = jafo.cookie(''),
+                        nav = navigator,
+                        srn = window.screen,
+                        np,
+                        ret = '';
+
+                    for(var i in nav) {
+                        if (typeof nav[i] === 'string' || !isNaN(nav[i])) {
+                            // we only care about the strings and numbers
+                            ret += ''+nav[i];
+                        }
+                    }
+
+                    np = nav.plugins;
+
+                    for(var iter = 0; iter < np.length; iter++) {
+                        ret += jafo._nav2str(np[i]);
+                    }
+
+                    if (typeof srn === 'object') {
+                        ret += jafo._nav2str(srn);
+                    }
+
+                    if (!Date.prototype.toISOString) {
+                        (function() {
+                            var pad = function (number) {
+                                var r = String(number);
+                                if ( r.length === 1 ) {
+                                    r = '0' + r;
+                                }
+                                return r;
+                            };
+                            Date.prototype.toISOString = function() {
+                                return this.getUTCFullYear()
+                                    + '-' + pad( this.getUTCMonth() + 1 )
+                                    + '-' + pad( this.getUTCDate() )
+                                    + 'T' + pad( this.getUTCHours() )
+                                    + ':' + pad( this.getUTCMinutes() )
+                                    + ':' + pad( this.getUTCSeconds() )
+                                    + '.' + String( (this.getUTCMilliseconds()/1000).toFixed(3) ).slice( 2, 5 )
+                                    + 'Z';
+                            };
+                        }() );
+                    }
+
+                    return jafo._sha256(ret + (new Date().toISOString()));
+                };
+
+                jafo._fromLegacy = function() {
+                    return jafo._.legacyQueue;
+                };
+
+                jafo._fromLs = function(kill) {
+                    var localString,
+                        tempData,
+                        localData = [];
+
+                    try{
+                        localString = localStorage.getItem(jafo._.lsKeyName);
+
+                        if(localString) {
+                            tempData = JSON.parse(localString);
+
+                            if(typeof tempData === 'object' && tempData[jafo._.lsArrayName]) {
+                                localData = tempData[jafo._.lsArrayName];
+                            }
+
+                            if(kill) {
+                                localStorage.removeItem(jafo._.lsKeyName);
+                            }
+                        }
+
+                    } catch(e) {
+                    }
+
+                    return jafo._isArr(localData)? localData: [];
+                };
+
+                jafo._getQueue = function() {
+                    if(jafo._.lsAvail) {
+                        return jafo._fromLs();
+                    }
+
+                    return jafo._fromLegacy();
+                };
+
+                jafo._handleAttrClick = function(ev) {
+                    var attrData,
+                        strJson,
+                        strValue,
+                        $targ = $(ev.currentTarget);
+
+                    if(ev.type === 'click' || (ev.type === 'mouseup' && ev.which === 2)) {
+
+                        if($targ.length) {
+                            strValue = ($targ.attr(jafo._.dataAttr)+'').match(jafo._.attrRegex);
+
+                            if(strValue && strValue.length > 1) {
+                                try {
+                                    strJson = (''+strValue[1]).replace(jafo._.chrRegex, '"');
+                                    attrData = JSON.parse(strJson);
+                                } catch(err) {
+                                    return false;
+                                }
+                            }
+
+                            if(attrData) {
+                                jafo.logAction(attrData);
+                            }
+                        }
+
+                    }
+                };
+
+                jafo._isArr = function(arr) {
+                    return Object.prototype.toString.call(arr) === '[object Array]';
+                };
+
+                jafo._mergeData = function(action) {
+                    var preJson, tD;
+
+                    if(typeof action === 'object' && typeof action.action === 'undefined' && typeof action.event === 'string') {
+                        tD = new Date();
+
+                        preJson = jafo._.userDetails;
+
+                        preJson.action    = clone(action);
+                        preJson.timestamp = tD.getTime();
+                        preJson.location  = document.location.toString();
+
+                        return preJson;
+                    }
+
+                    return;
+                };
+
+                jafo._nav2str = function(obj) {
+                    var out = [];
+
+                    if (typeof obj !== 'object') {
+                        return ''+obj;
+                    }
+
+                    for (var memb in obj) {
+
+                        if (obj.hasOwnProperty(memb)) {
+                            if (jafo._isArr(obj[memb])) {
+
+                                out.push.apply(out, obj[memb].map(function(part) {
+                                    return memb+'[]='+part;
+                                }));
+
+                            } else if (typeof obj[memb] === 'object' && obj[memb] !== obj) {
+
+                                out.push(memb+'='+jafo._nav2str(obj[memb]));
+
+                            } else if (typeof obj[memb] != 'function') {
+
+                                out.push(memb+'='+obj[memb]);
+
+                            }
+                        }
+
+                    }
+
+                    return out.length > 0? out.join('&'): false;
+                };
+
+                jafo._parmLabel = function(num) {
+                    var mod = num % 26,
+                        pow = num / 26 | 0,
+                        out = String.fromCharCode(97 + mod);
+
+                    return pow > 0? jafo._parmLabel(pow - 1) + out: out;
+                };
+
+                jafo._pollQueue = function() {
+                    var smoulder = jafo._sliceQueue(jafo._.maxBatch),
+                        url;
+
+                    if(jafo._.scheduled !== null) {
+                        clearTimeout(jafo._.scheduled);
+                    }
+
+                    if(jafo._isArr(smoulder) && smoulder.length) {
+                        url = jafo._.imgLoc+'?'+jafo.batch.apply(jafo, smoulder);
+
+                        jafo._fire(url);
+                    }
+
+                    jafo._.scheduled = null;
+                    jafo._schedPoll();
+
+                    return url;
+                };
+
+                jafo._queue = function(data) {
+                    if(jafo._.lsAvail) {
+                        jafo._queueLs(data);
+                    }
+
+                    jafo._queueLegacy(data);
+
+                    return jafo._pollQueue();
+                };
+
+                jafo._queueLs = function(data) {
+                    var extant  = jafo._fromLs(),
+                        argData = clone(data);
+
+                    extant.push(argData);
+                    jafo._saveQueueLs(extant)
+
+                    return argData;
+                };
+
+                jafo._queueLegacy = function(data) {
+                    var argData = clone(data);
+
+                    jafo._.legacyQueue.push(argData);
+
+                    return argData;
+                };
+
+                jafo._sessionStart = function() {
+                    if(jafo._.sessionFired) {
+                        return;
+                    }
+                    jafo._.sessionFired = true;
+                                            if(!jafo._.selfRefRgx.test(jafo._.userDetails.referrer)) {
+                            jafo.logAction({
+                                event: 'sessionStart',
+                                meta: {
+                                    language: navigator.language,
+                                    screenResolution: window.screen.width+'x'+window.screen.height,
+                                    timezone: (new Date().getTimezoneOffset()) * 60,
+                                    secure: document.location.proto === 'https',
+                                    platform: platform
+                                }
+                            });
+                        }
+                    
+                };
+
+                jafo._sha256 = function(s) {
+                    var chrsz   = 8
+                        , hexcase = 0;
+                    function safe_add (x, y) {
+                        var lsw = (x & 0xFFFF) + (y & 0xFFFF)
+                            , msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+                        return (msw << 16) | (lsw & 0xFFFF);
+                    }
+                    function S (X, n) { return ( X >>> n ) | (X << (32 - n)); }
+                    function R (X, n) { return ( X >>> n ); }
+                    function Ch(x, y, z) { return ((x & y) ^ ((~x) & z)); }
+                    function Maj(x, y, z) { return ((x & y) ^ (x & z) ^ (y & z)); }
+                    function Sigma0256(x) { return (S(x, 2) ^ S(x, 13) ^ S(x, 22)); }
+                    function Sigma1256(x) { return (S(x, 6) ^ S(x, 11) ^ S(x, 25)); }
+                    function Gamma0256(x) { return (S(x, 7) ^ S(x, 18) ^ R(x, 3)); }
+                    function Gamma1256(x) { return (S(x, 17) ^ S(x, 19) ^ R(x, 10)); }
+                    function core_sha256 (m, l) {
+                        var K = new Array(0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5, 0x3956C25B, 0x59F111F1, 0x923F82A4, 0xAB1C5ED5, 0xD807AA98, 0x12835B01, 0x243185BE, 0x550C7DC3, 0x72BE5D74, 0x80DEB1FE, 0x9BDC06A7, 0xC19BF174, 0xE49B69C1, 0xEFBE4786, 0xFC19DC6, 0x240CA1CC, 0x2DE92C6F, 0x4A7484AA, 0x5CB0A9DC, 0x76F988DA, 0x983E5152, 0xA831C66D, 0xB00327C8, 0xBF597FC7, 0xC6E00BF3, 0xD5A79147, 0x6CA6351, 0x14292967, 0x27B70A85, 0x2E1B2138, 0x4D2C6DFC, 0x53380D13, 0x650A7354, 0x766A0ABB, 0x81C2C92E, 0x92722C85, 0xA2BFE8A1, 0xA81A664B, 0xC24B8B70, 0xC76C51A3, 0xD192E819, 0xD6990624, 0xF40E3585, 0x106AA070, 0x19A4C116, 0x1E376C08, 0x2748774C, 0x34B0BCB5, 0x391C0CB3, 0x4ED8AA4A, 0x5B9CCA4F, 0x682E6FF3, 0x748F82EE, 0x78A5636F, 0x84C87814, 0x8CC70208, 0x90BEFFFA, 0xA4506CEB, 0xBEF9A3F7, 0xC67178F2)
+                            , HASH = new Array(0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A, 0x510E527F, 0x9B05688C, 0x1F83D9AB, 0x5BE0CD19)
+                            , W = new Array(64)
+                            , a, b, c, d, e, f, g, h, i, j
+                            , T1, T2;
+                        m[l >> 5] |= 0x80 << (24 - l % 32);
+                        m[((l + 64 >> 9) << 4) + 15] = l;
+                        for ( var i = 0; i<m.length; i+=16 ) {
+                            a = HASH[0];
+                            b = HASH[1];
+                            c = HASH[2];
+                            d = HASH[3];
+                            e = HASH[4];
+                            f = HASH[5];
+                            g = HASH[6];
+                            h = HASH[7];
+                            for ( var j = 0; j<64; j++) {
+                                if (j < 16) W[j] = m[j + i];
+                                else W[j] = safe_add(safe_add(safe_add(Gamma1256(W[j - 2]), W[j - 7]), Gamma0256(W[j - 15])), W[j - 16]);
+                                T1 = safe_add(safe_add(safe_add(safe_add(h, Sigma1256(e)), Ch(e, f, g)), K[j]), W[j]);
+                                T2 = safe_add(Sigma0256(a), Maj(a, b, c));
+                                h = g;
+                                g = f;
+                                f = e;
+                                e = safe_add(d, T1);
+                                d = c;
+                                c = b;
+                                b = a;
+                                a = safe_add(T1, T2);
+                            }
+                            HASH[0] = safe_add(a, HASH[0]);
+                            HASH[1] = safe_add(b, HASH[1]);
+                            HASH[2] = safe_add(c, HASH[2]);
+                            HASH[3] = safe_add(d, HASH[3]);
+                            HASH[4] = safe_add(e, HASH[4]);
+                            HASH[5] = safe_add(f, HASH[5]);
+                            HASH[6] = safe_add(g, HASH[6]);
+                            HASH[7] = safe_add(h, HASH[7]);
+                        }
+                        return HASH;
+                    }
+                    function str2binb (str) {
+                        var bin = Array()
+                            , mask = (1 << chrsz) - 1;
+                        for(var i = 0; i < str.length * chrsz; i += chrsz) {
+                            bin[i>>5] |= (str.charCodeAt(i / chrsz) & mask) << (24 - i%32);
+                        }
+                        return bin;
+                    }
+                    function Utf8Encode(string) {
+                        string = string.replace(/\r\n/g,"\n");
+                        var utftext = "";
+                        for (var n = 0; n < string.length; n++) {
+                            var c = string.charCodeAt(n);
+                            if (c < 128) {
+                                utftext += String.fromCharCode(c);
+                            }
+                            else if((c > 127) && (c < 2048)) {
+                                utftext += String.fromCharCode((c >> 6) | 192);
+                                utftext += String.fromCharCode((c & 63) | 128);
+                            }
+                            else {
+                                utftext += String.fromCharCode((c >> 12) | 224);
+                                utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+                                utftext += String.fromCharCode((c & 63) | 128);
+                            }
+                        }
+                        return utftext;
+                    }
+                    function binb2hex (binarray) {
+                        var hex_tab = hexcase ? "0123456789ABCDEF" : "0123456789abcdef"
+                            , str = "";
+                        for(var i = 0; i < binarray.length * 4; i++) {
+                            str += hex_tab.charAt((binarray[i>>2] >> ((3 - i%4)*8+4)) & 0xF) +
+                            hex_tab.charAt((binarray[i>>2] >> ((3 - i%4)*8  )) & 0xF);
+                        }
+                        return str;
+                    }
+                    s = Utf8Encode(s);
+                    return binb2hex(core_sha256(str2binb(s), s.length * chrsz));
+                };
+
+                jafo._saveQueueLs = function(qData) {
+                    var argData = qData.slice(),
+                        tempObj = new Object();
+
+                    if(jafo._isArr(argData)) {
+                        tempObj[jafo._.lsArrayName] = argData;
+
+                        try {
+                            localStorage.setItem(jafo._.lsKeyName, JSON.stringify(tempObj));
+                        } catch(err) {
+                            return false;
+                        }
+
+                        return argData;
+                    }
+                };
+
+                jafo._schedPoll = function() {
+                    var remnant = jafo._getQueue();
+
+                    if(jafo._.scheduled !== null && remnant.length) {
+                        jafo._.scheduled = setTimeout(jafo._pollQueue, jafo._.pollDelay);
+                    }
+
+                    return jafo._.scheduled;
+                };
+
+                jafo._sliceQueue = function(length) {
+                    if(jafo._.lsAvail) {
+                        return jafo._sliceQueueLs(length);
+                    }
+
+                    return jafo._sliceQueueLegacy(length);
+                };
+
+                jafo._sliceQueueLegacy = function(len) {
+                    var q = jafo._.legacyQueue,
+                        pxs = [],
+                        iter;
+
+                    if(!isNaN(len) && jafo._isArr(q)) {
+                        for(iter = 0; iter < len; iter++) {
+                            if(q.length) {
+                                pxs.push(q.shift());
+                            }
+                        }
+                    }
+
+                    return pxs;
+                };
+
+                jafo.cookie = function(cookieName, cookieValue, expires ) {
+                    var cookArr    = new String(document.cookie).split( /; ?/ ),
+                        cookObj    = new Object(),
+                        newStr     = null,
+                        cookieName = cookieName.trim();
+                    if ( this.isString(cookieName) && ( typeof(cookieValue) != 'undefined' ) ) {
+                        if ( !this.isString(expires) ) {
+                            expires = new Date( new Date().getTime() + parseInt( 1000*60*60*24*365 ) ).toGMTString();
+                        }
+                        newStr = cookieName + '=' + escape(cookieValue) + ';expires=' + expires +
+                            ';domain=.' + window.location.host + ';path=/';
+                        if ( document.cookie = newStr ) {
+                            return jafo.cookie( cookieName );
+                        };
+                    } else {
+                        for ( var cookie in cookArr ) {
+                            if ( typeof(cookArr[cookie].match) == 'function' ) {
+                                var kN = cookArr[cookie].match( /[^=]+/ )+'';
+                                var kV;
+                                if ( kN !== '' ) {
+                                    var reRex = new RegExp( '^'+kN+'=' );
+                                    kV = unescape( cookArr[cookie].replace( reRex, '' ) );
+                                }
+                                cookObj[kN] = kV;
+                            }
+                        }
+                        if ( cookieName === undefined ) {
+                            return cookObj;
+                        } else if ( this.isObject(cookObj) && this.isString(cookObj[cookieName]) ) {
+                            return cookObj[cookieName];
+                        }
+                    }
+                    return;
+                };
+
+                jafo._sliceQueueLs = function(len) {
+                    var q = jafo._getQueue(),
+                        pxs = [],
+                        iter;
+
+                    if(!isNaN(len) && jafo._isArr(q)) {
+                        for(iter = 0; iter < len; iter++) {
+                            if(q.length) {
+                                pxs.push(q.shift());
+                            }
+                        }
+
+                        jafo._saveQueueLs(q);
+                    }
+
+                    return pxs;
+                };
+
+                jafo.logAction = function(action) {
+                    var data = jafo._mergeData(action);
+
+                    if(typeof data === 'object') {
+                        return jafo._queue(data);
+                    }
+
+                    return false;
+                };
+
+                jafo.context =  'true';
+
+                jafo._.userDetails.UID = jafo.cookie(jafo._.uidCookie) || jafo._fp();
+                jafo.cookie(jafo._.uidCookie, jafo._.userDetails.UID, jafo._.cookieOpts.expires);
+
+                jafo._.lsAvail = jafo._canUseLs();
+
+                return jafo;
+            })();
+        </script>
+        <script type="text/javascript">
+            var height = function(elm) {
+                var elmHeight, elmMargin, elm;
+
+                if(document.all) {
+                    elmHeight = elm.currentStyle.height;
+                    elmMargin = parseInt(elm.currentStyle.marginTop, 10) + parseInt(elm.currentStyle.marginBottom, 10);
+                } else {
+                    elmHeight = parseInt(document.defaultView.getComputedStyle(elm, '').getPropertyValue('height'));
+                    elmMargin = parseInt(document.defaultView.getComputedStyle(elm, '').getPropertyValue('margin-top')) + parseInt(document.defaultView.getComputedStyle(elm, '').getPropertyValue('margin-bottom'));
+                }
+                if(elmHeight === 'auto') {
+                    return 'auto';
+                }
+                return (elmHeight + elmMargin + 1) + 'px'; //to account for rounding down due to parse int
+            };
+
+            var platform = 'web';
+
+            if (navigator.userAgent.match(/Android/)) {
+                platform = 'android';
+            } else if (navigator.userAgent.match(/\biPhone\b|\biPod\b/)) {
+                platform = 'apple';
+            } else if (navigator.userAgent.match(/Windows Phone 10.0|Windows Phone 8.1|Windows Phone 8.0|Windows Phone OS|XBLWP7|ZuneWP7|Windows NT 6.[23]; ARM;/)) {
+                platform = 'windowsphone';
+            }
+
+            var scaleHeight = function(height1, width1, width2) {
+                return ((height1 / width1) * width2);
+            };
+
+            var clickHandler = function(eventName, meta) {
+                                    if (!meta) {
+                        meta = { };
+                    }
+
+                    meta.hash     = '0JyrJKz';
+                    meta.platform = platform;
+
+                    window.ImgurJafo.logAction({
+                        event: eventName,
+                        meta: meta
+                    });
+                
+            };
+
+            var logoClickHandler = function() {
+                clickHandler('embedClickLogo');
+            };
+
+            var usernameClickHandler = function() {
+                clickHandler('embedClickUsername');
+            };
+
+            var commentsClickHandler = function() {
+                clickHandler('embedClickComments');
+            };
+
+            var imageClickHandler = function() {
+                clickHandler('embedClickImage');
+            };
+
+            var getAppMobileClickHandler = function() {
+                clickHandler('appDownloadLink', {
+                    embedPlatform: 'mobileweb'
+                });
+            };
+
+            var getAppWebClickHandler = function() {
+                clickHandler('appDownloadLink', {
+                    embedPlatform: 'web'
+                });
+            };
+
+            window.onload = function() {
+                var d                 = document,
+                    bodyPadding       = 16,
+                    maxWidth          = d.body.parentElement.offsetWidth,
+                    maxImageWidth     = maxWidth - 16,
+                    underImagePadding = 12,
+                    $getApp           = d.getElementById('app-container'),
+                    $underImage       = d.getElementById('under-image'),
+                    $imageElement     = d.getElementById('image'),
+                    $title            = d.getElementById('title'),
+                    $description      = d.getElementById('description'),
+                    $imgTag           = d.getElementById('img-tag'),
+                    $logo             = d.getElementById('logo-container'),
+                    $username         = d.getElementById('username'),
+                    $comments         = d.getElementById('comments'),
+                    $imageLink        = d.getElementById('image-link'),
+                    androidLink       = 'https://play.google.com/store/apps/details?id=com.imgur.mobile',
+                    appleLink         = 'https://imgur.com/apps',
+                    parent            = window.parent === window.top ? window.top : window.parent,
+                    bodyWidth, message, bodyHeight, underImageHeight;
+
+                    function createLink(href, innerHTML, onclick, id) {
+                        var a = d.createElement('a');
+                        a.href = href;
+                        a.innerHTML = innerHTML;
+                        a.onclick = onclick;
+                        a.setAttribute('id', id);
+                        a.setAttribute('target', '_blank');
+                        return a;
+                    }
+
+                    if (platform == 'android') {
+                        $getApp.appendChild(createLink(androidLink, 'Get the app <b>&gt;</b>', getAppMobileClickHandler, 'app-get'));
+                    } else if (platform == 'apple') {
+                        $getApp.appendChild(createLink(appleLink, 'Get the app <b>&gt;</b>', getAppMobileClickHandler, 'app-get'));
+                    } else if (platform == 'windowsphone') {
+                    } else {
+                        $getApp.appendChild(createLink(appleLink, '', getAppWebClickHandler, 'app-apple'));
+                        $getApp.appendChild(createLink(androidLink, '', getAppWebClickHandler, 'app-android'));
+                    }
+
+                    $logo.onclick      = logoClickHandler;
+                    $imageLink.onclick = imageClickHandler;
+
+                    if($username) {
+                        $username.onclick = usernameClickHandler;
+                    }
+                    if($comments) {
+                        $comments.onclick = commentsClickHandler;
+                    }
+
+                if(1398 > maxImageWidth) {
+                    $imageElement.style['width'] = maxImageWidth + 'px';
+                    $imageElement.style['height'] = scaleHeight(743, 1398, maxImageWidth) + 'px';
+                    bodyWidth = maxWidth;
+                } else {
+                    $imageElement.style['width'] = 1398 + 'px';
+                    $imageElement.style['height'] = 743 + 'px';
+                    bodyWidth = 1398 + bodyPadding;
+                }
+
+                if(!true) {
+                    $underImage.style['padding-top'] = '8px';
+                }
+
+                bodyHeight = $getApp.offsetHeight + $imageElement.offsetHeight + $underImage.offsetHeight + bodyPadding;
+
+                message = JSON.stringify({
+                    message  : 'resize_imgur',
+                    href     : window.location.href,
+                    height   : bodyHeight,
+                    width    : d.documentElement.clientWidth,
+                    context  : true
+                });
+
+                parent.postMessage(message,'*');
+                window.ImgurJafo._sessionStart();
+                                    window.ImgurJafo.logAction({
+                        event: 'item',
+                        meta: {
+                            hash: '0JyrJKz',
+                            isAlbum: false,
+                            context: true
+                        }
+                    });
+                
+            };
+        </script>
+    </head>
+
+    <body>
+        <div id="content">
+            <div id="app-container"><a href="https://imgur.com/apps" id="app-apple" target="_blank"></a><a href="https://play.google.com/store/apps/details?id=com.imgur.mobile" id="app-android" target="_blank"></a></div>
+            <div class="embed-main-image">
+                <div class="panel">
+                    
+                    
+                    
+
+                    <a id="image-link" class="image-link" href="https://imgur.com/0JyrJKz" target="_blank">
+                        <div class="image-panel">
+                            <div id="image" class="image" style="width: 522px; height: 277.429px;">
+                                                                    <img id="img-tag" class="post" src="./0JyrJKz.gif">
+                                
+                            </div>
+                        </div>
+                    </a>
+
+                    <div id="under-image" class="under-image">
+                                                    <div class="title-description">
+                                
+                                                                    <p id="description" class="description">Gradient descent with different levels of censoring. Discrete low-res Weibull distribution. Here it gets stuck when there's only one uncensored bin</p>
+                                
+                            </div>
+                        
+                        <div class="base-nav">
+                                                            
+                                                                    <span class="meta-attr">
+                                        
+                                        <a class="grey-text" href="https://imgur.com/0JyrJKz" target="_blank">
+                                                                                            5,710
+                                            
+                                            views</a>
+                                    </span>
+                                
+                                <span class="meta-attr">
+                                    
+                                </span>
+                            
+                            <a href="https://imgur.com/" id="logo-container" class="logo-container" target="_blank"><img class="logo" src="./logo.png"></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+    var _comscore = _comscore || [];
+    _comscore.push({ c1: "2", c2: "7770950" });
+    (function() {
+        var s = document.createElement("script"), el = document.getElementsByTagName("script")[0]; s.async = true;
+        s.src = (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js";
+        el.parentNode.insertBefore(s, el);
+    })();
+</script>
+<noscript>
+    &lt;img src="http://b.scorecardresearch.com/p?c1=2&amp;c2=7770950&amp;cv=2.0&amp;cj=1" /&gt;
+</noscript>
+        <!-- Quantcast Tag -->
+<script type="text/javascript">
+var _qevents = _qevents || [];
+(function() {
+    var elem = document.createElement('script');
+    elem.src = (document.location.protocol == "https:" ? "https://secure" : "http://edge") + ".quantserve.com/quant.js";
+    elem.async = true;
+    elem.type = "text/javascript";
+    var scpt = document.getElementsByTagName('script')[0];
+    scpt.parentNode.insertBefore(elem, scpt);
+})();
+_qevents.push({
+    qacct:"p-f8oruOqDFlMeI"
+});
+</script>
+
+<noscript>
+    &lt;div style="display:none;"&gt;&lt;img src="//pixel.quantserve.com/pixel/p-f8oruOqDFlMeI.gif" border="0" height="1" width="1" alt="Quantcast"/&gt;&lt;/div&gt;
+</noscript>
+<!-- End Quantcast tag -->
+
+
+    
+
+</body></html>
