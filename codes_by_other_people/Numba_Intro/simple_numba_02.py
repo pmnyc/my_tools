@@ -160,3 +160,58 @@ r = add66(x, y)
 endtime = datetime.datetime.now()
 print "It takes %s to run" %(endtime-starttime)
 # It took 40 seconds without using any jit
+
+##################################################
+##################################################
+from numba import guvectorize, int64, float64
+import numpy as np
+
+@guvectorize(["void(float64[:,:], float64[:,:], float64[:], intp[:])"],
+             "(m,n),(p,n)->(m),(m)", nopython=True)
+def find_nearest_points(a, b, res, idx):
+    """ This functions finds the data point in matrix 'b' that is closest to a given
+        data point in matrix 'a'. This is useful, for example, given a sequence of GPS
+        data points of matrix 'a', which points of interest in data points of matrix 'b'
+        are closest to this sequence of GPS points.
+        'a', 'b' can not have nan values
+    Parameters
+    ----------
+    a : array-like list or numpy array
+        The main data points for the match (similar to left join in SQL)
+    b: array-like list or numpy array
+        The reference data points for the match
+    Returns:
+    ----------
+    res: array-like list or numpy array
+        The smallest distance between a given data poin in matrix 'a' and data points in matrix 'b'
+    idx: array-like list or numpy array
+        The index of the data point in reference matrix 'b' that is closet to a given data point in
+        matrix 'a'
+    Examples:
+    ----------
+        >>> out = find_nearest_points(np.array([[1,2],[3,4]]),
+                                      np.array([[4,2],[1,3],[7,3]]))
+        out[0][1] is the cloest distance between [3,4] from 'a' and any point in 'b'
+        out[1][1] is the index of point in 'b' having cloest distance between [3,4] from 'a' 
+                    and any point in 'b'
+    """
+    # ensure the a,b are the matrix having same num of columns
+    assert len(a[0]) == len(b[0])
+    n_col = len(a[0])
+    for i in range(len(a)):
+        min_dis = 1.0 * 1e20
+        min_idx = -1
+        for j in range(len(b)):
+            s = 0.0
+            for col in range(n_col):
+                s += (a[i][col] - b[j][col]) ** 2
+            if s ** 0.5 < min_dis:
+                min_dis = s ** 0.5
+                min_idx = j + 0
+        if min_idx <0:
+            res[i] = np.nan
+        else:
+            res[i] = min_dis
+        idx[i] = min_idx
+    ...
+    # End of find_nearest_points function
