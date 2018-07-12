@@ -5,11 +5,14 @@ library(feather)
 
 #####################  UTILITIES  #####################
 generate_data_dictionary = function(df) {
+    df_ = df[1]
     # create data dictionry for the data.table
-    data_dictionary = data.table::data.table(column=NA, description=NA)[0]
-    for (col in colnames(df)) {
-        col_desc_ = ifelse(is.null(attributes(df[, get(col)])[["label"]]), "",attributes(df[, get(col)])[["label"]])
-        data_dictionary = rbind(data_dictionary, data.table::data.table(column=col, description=col_desc_))
+    data_dictionary = data.table::data.table(column=colnames(df_), description="")
+    for (col in colnames(df_)) {
+        col_desc_ = attr(df[[col]], 'label')
+        if (!is.null(col_desc_)) {
+            data_dictionary[column==col, description := col_desc_]
+        }
     }
     return(data_dictionary)
 }
