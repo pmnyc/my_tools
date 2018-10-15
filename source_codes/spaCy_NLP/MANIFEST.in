@@ -1,4 +1,0 @@
-recursive-include include *.h
-include LICENSE
-include README.rst
-include bin/spacy

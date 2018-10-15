@@ -1,7 +1,0 @@
-*.pyc
-mltools.egg-info/
-dist/
-/venv
-models/
-/build
-.DS_Store

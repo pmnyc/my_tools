@@ -1,3 +1,0 @@
-include *.txt
-recursive-include skinematics/tests/data *.txt *.csv *.BIN
-recursive-include docs *.*

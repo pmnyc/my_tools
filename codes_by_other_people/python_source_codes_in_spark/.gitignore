@@ -1,5 +1,0 @@
-*.pyc
-docs/
-pyspark.egg-info
-build/
-dist/

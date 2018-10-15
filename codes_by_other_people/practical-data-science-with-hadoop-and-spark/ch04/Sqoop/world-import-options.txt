@@ -1,7 +1,0 @@
-import
-   --connect
-   jdbc:mysql://bde-static-pool-26.arnet/world
-   --username
-   sqoop
-   --password
-   sqoop
