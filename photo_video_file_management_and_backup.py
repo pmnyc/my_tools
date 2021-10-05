@@ -7,10 +7,10 @@ This program contains a list of functions for managing the storage of various ty
 import os
 import shutil
 import time
-from PIL import Image
 
 
 def get_date_taken(image_file):
+    from PIL import Image
     try:
         return Image.open(image_file)._getexif()[36867]
     except KeyError:
@@ -18,7 +18,7 @@ def get_date_taken(image_file):
 
 
 def merge_files_from_one_folder_to_another_folder(folder_merge_from: str, folder_merge_to: str, overwrite: bool = False):
-    """ It merges two folders by copying the files from folder `folder_merge_from` to `folder_merge_to`.
+    """ It merges two folders by copying the files from folder `folder_merge_from` into `folder_merge_to`.
         For example, if we want to copy photos from one directory to another directory, but afraid of deleting photos in the
         destination folder, we may use this function to do the copy in a safe way.
 
@@ -128,14 +128,18 @@ def flattern_file_paths(folder: str):
             shutil.rmtree(os.path.join(root, d))
 
 
-def remove_duplicate_files_from_folder2clear(folder2keep, folder2clear):
+def remove_duplicates_by_comparing_2_same_pathpattern_folders(folder2keep, folder2clear):
     """ Remove the same files in the folder folder2clear that also exist in folder folder2keep
+        So, in other words, only delete the file in folder2clear if the file path pattern is identical
+            to another file in folder2keep
 
         For example:
             folder2keep has files "./folder1/01/a.jpg", "./folder1/03/b.jpg"
-            folder2clear has files "./folder2/01/a.jpg", "./folder1/01/c.jpg"
+            folder2clear has files "./folder2/01/a.jpg", "./folder1/01/c.jpg", "./folder1/02/a.jpg"
             Then, this function remove "./folder2/01/a.jpg" in the folder2clear because
                 "01/a.jpg" exists in the folder2keep
+                But, "./folder1/02/a.jpg" will be kept there since it's within different folder name "02",
+                not "01"
 
     Parameters
     ----------
@@ -152,7 +156,7 @@ def remove_duplicate_files_from_folder2clear(folder2keep, folder2clear):
     Examples
     --------
         >>> folder2keep, folder2clear = "./folder1", "./folder2"
-        >>> remove_duplicate_files_from_folder2clear(folder2keep, folder2clear)
+        >>> remove_duplicates_by_comparing_2_same_pathpattern_folders(folder2keep, folder2clear)
     """
     folder2keep = os.path.abspath(folder2keep)
     folder2clear = os.path.abspath(folder2clear)
@@ -173,8 +177,54 @@ def remove_duplicate_files_from_folder2clear(folder2keep, folder2clear):
         print(f"Deleted {c} files in the foldler {folder2clear} because these duplicate files were found in {folder2keep}")
 
 
+def remove_duplicates_if_filename_exists_in_folder2clear(folder2keep, folder2clear):
+    """ Remove the duplicate files if the file names exist in both folder2keep and folder2clear regardless of
+        what directory paths the file with same name exists in their folders
+
+        For example:
+            folder2keep has files "./folder1/01/a.jpg", "./folder1/03/b.jpg"
+            folder2clear has files "./folder2/01/a.jpg", "./folder1/01/c.jpg", "./folder1/02/a.jpg"
+            Then, this function remove "./folder2/01/a.jpg" and "./folder1/02/a.jpg" in the folder2clear because
+                "a.jpg" exist in both folders folder2keep and folder2clear even they are saved in different paths
+
+    Parameters
+    ----------
+    folder2keep : str
+        The directory of the folder that we'll keep and be compared to
+    folder2clear : str
+        The directory of the folder we'll check against folder2keep, if same files exist
+        in folder2keep, then delete these duplicate files in folder2clear
+
+    Returns
+    -------
+    None.
+
+    Examples
+    --------
+        >>> folder2keep, folder2clear = "./folder1", "./folder2"
+        >>> remove_duplicates_if_filename_exists_in_folder2clear(folder2keep, folder2clear)
+
+    """
+    allfilenames2clear = []
+    c = 0
+    for root, dirs, files in os.walk(folder2keep):
+        allfilenames2clear.extend(list(files))
+    allfilenames2clear = list(set(allfilenames2clear) - set([".DS_Store", "", "."]))
+    for root, dirs, files in os.walk(folder2clear):
+        for f in files:
+            if f in allfilenames2clear:
+                file2clear = os.path.join(root, f)
+                os.remove(file2clear)
+                print("."*25)
+                print(f"Deleted file {file2clear} since it exists in {folder2keep}")
+                c += 1
+    if c > 0:
+        print("-"*15)
+        print(f"Deleted {c} files in the foldler {folder2clear} because these duplicate files were found in {folder2keep}")
+
+
 if __name__ == "":
-    # 1) Merge the files from "./folder1" to "./folder2" while keeping the directory path pattern
+    # 1) Merge the files from "./folder1" into "./folder2" while keeping the directory path pattern
     merge_files_from_one_folder_to_another_folder("./folder1", "./folder2", overwrite=False)
     #    To force overwrite of the same files even they exist in folder2
     merge_files_from_one_folder_to_another_folder("./folder1", "./folder2", overwrite=True)
@@ -189,5 +239,13 @@ if __name__ == "":
     flattern_file_paths("./folder1")
     #
     #
-    # 3) Delete duplicate files in "./folder2" found in "./folder1"
-    remove_duplicate_files_from_folder2clear("./folder1", "./folder2")
+    # 3) Delete duplicate files in "./folder2" found in "./folder1" and those duplicate files
+    #    are stored in the same directory path, e.g. files "folder1/01/a.jpg", "folder2/01/a.jpg"
+    #    are considered having same directory path
+    remove_duplicates_by_comparing_2_same_pathpattern_folders("./folder1", "./folder2")
+    #
+    #
+    # 4) Delete duplicate files in "./folder2" found in "./folder1" regardless what the file
+    #    directory path is like as long as the file names are the same, it will be removed
+    #    from "./folder2"
+    remove_duplicates_if_filename_exists_in_folder2clear("./folder1", "./folder2")
