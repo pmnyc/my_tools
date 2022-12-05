@@ -61,13 +61,20 @@ df.with_columns([pl.col("A").diff().over("fruits").alias("A_diff_by_fruits")]) #
 df.with_columns([((dt.datetime.now()-pl.col("birthday")).dt.days()/365.25).floor().cast(pl.Int64).alias("age")]) # get the age from column birthday (date)
 df.with_column(pl.repeat("audi",len(df)).alias("car_new")) # create a new column (could be replacement of an old column) 'car_new' with only value "audi"
 
+# the following are some simple pl.Series operations
+s_fruits, s_cars = df["fruits"], df["cars"]
+s_fruits.set(s_fruits == "banana", "orange") # reset fruits pl.Series value to 'orange' on index where fruits pl.Series == 'banana'
+s_fruits.set_at_idx(np.array([2,4]), "orange") # reset fruits pl.Series value to orange on index 2,4
+s_fruits.take(np.array([2,4])) # take subset of fruits pl.Series at index 2,4
+s_fruits.zip_with(s_cars=="audi", s_cars) # this is little weird, take fruits pl.Series when cars pl.Series=='audi', if not 'audi', take values from another pl.Series, df["cars"]
+
 # create a pivot table of two columns (row as foo, column as bar), aggregate column baz values by sum
 df = pl.DataFrame({"foo": ["one", "one", "one", "two", "two"], "bar": ["A", "B", "A", "A", "B"], "baz": [1, 2, 3, 7, 4]})
 df.pivot(values="baz", index="foo", columns="bar", aggregate_fn="sum")
 
 # cut the age series into bins (the result is a pl.DataFrame)
-a = pl.Series("age", [7,23,28,35,float("NaN")])
-pl.cut(a, bins=[20,30], labels=["1) <20", "2) 20-30", "3) 30+"], category_label="age_bin") # NaN value converted to bin value None
+s_age = pl.Series("age", [7,23,28,35,float("NaN")])
+pl.cut(s_age, bins=[20,30], labels=["1) <20", "2) 20-30", "3) 30+"], category_label="age_bin") # NaN value converted to bin value None
 
 # get the date range
 pl.date_range(low=dt.datetime(2021, 12, 16), high=dt.datetime(2022, 1, 3), interval="2d") # get the list of dates for every 2 days, use interval='1mon' for every month, interval='30m' for every 30 mins
