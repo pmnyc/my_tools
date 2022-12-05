@@ -31,6 +31,7 @@ df.sort(["cars", "fruits"]).select(["fruits", "cars",
 assert len(df) == df.shape[0]  # get the num of rows
 df.lazy().fetch(4) == df.head(4)  # get the first 4 rows, but fetch is on lazy operation
 print("Try to use .lazy() and .collect() in the code for faster optimized operation")
+print("The pl.Series to_numpy operation is slow, try to stick to pl.Series for faster data processing")
 df.columns  # check columns
 df.dtypes  # check data types
 df.select(["A", "fruits"])  # select on two columns A, fruits
@@ -53,9 +54,20 @@ df.sample(10) # get random sample of 10 rows
 df2 = df.clone(); df2 = df2.cleared(); del df2 # to remove/delete the dataframe object, it's large and just del df can make memory swell
 pl.DataFrame({"foo": [1, 2, 3], "bar": [6, None, 8]}).lazy().drop_nulls(subset=["bar"]).collect() # drop the rows having null values for columns, say bar in this case
 df.fill_nan(99) # fill NaN values with value 99, fill_null for None values
+df.insert_at_idx(1, pl.Series("rowidx", np.arange(len(df)))) # add a new column rowidx as the 2nd (index 1 there) column
 df.select([pl.all(), pl.col("A").reverse().over("fruits").suffix("_reverse")]) # add A_reverse column with column A reversed by column fruits
+df.slice(1,3) # get sub dataframe from row index 1 and total 3 rows, use df.slice(1,None) for getting all rows from row index 1 to end
 df.with_columns([pl.col("A").diff().over("fruits").alias("A_diff_by_fruits")]) # add difference of column A from previous A value given column "fruits" current value
 df.with_columns([((dt.datetime.now()-pl.col("birthday")).dt.days()/365.25).floor().cast(pl.Int64).alias("age")]) # get the age from column birthday (date)
+df.with_column(pl.repeat("audi",len(df)).alias("car_new")) # create a new column (could be replacement of an old column) 'car_new' with only value "audi"
+
+# create a pivot table of two columns (row as foo, column as bar), aggregate column baz values by sum
+df = pl.DataFrame({"foo": ["one", "one", "one", "two", "two"], "bar": ["A", "B", "A", "A", "B"], "baz": [1, 2, 3, 7, 4]})
+df.pivot(values="baz", index="foo", columns="bar", aggregate_fn="sum")
+
+# cut the age series into bins (the result is a pl.DataFrame)
+a = pl.Series("age", [7,23,28,35,float("NaN")])
+pl.cut(a, bins=[20,30], labels=["1) <20", "2) 20-30", "3) 30+"], category_label="age_bin") # NaN value converted to bin value None
 
 # get the date range
 pl.date_range(low=dt.datetime(2021, 12, 16), high=dt.datetime(2022, 1, 3), interval="2d") # get the list of dates for every 2 days, use interval='1mon' for every month, interval='30m' for every 30 mins
@@ -118,6 +130,23 @@ df.sort(["birthday"], reverse=[True]).groupby(["fruits"]).agg([AandB().alias("Aj
 # use regex to find the string values based on string pattern
 df1 = pl.DataFrame({"words":["ret_gross_12q2","ret_net_12q2", "ret_apple"]})
 df1.filter(pl.col("words").str.contains(r"ret_\w+[0-9]+q[0-9]+")) # find the ret*<num>q<num>
+
+# Under each condition, apply multiple changes to the data. For exmaple, the following is
+#    1) add 5 to current column A value, and add 2 to column A value to assign column B value when cars=='audi'
+#    2) X 10 to current column A value for column C, and square column A value to assign column D value when cars=='toyota'
+#    since the two pl.when statements are both in one with_columns statement, the column A value in calculation still uses old A value
+#    even one of expressions changes A value during the same with_columns statement
+df2 = pl.DataFrame({"cars": ["beetle", "audi", "toyota"], "A": [1, 2, 3], "B": [5, 9, 3]})
+df2.with_columns([pl.Series([None]).alias("C"), pl.Series([None]).alias("D")]).with_columns([
+        pl.when(pl.col("cars")=="audi").then(
+            pl.struct([(pl.col("A")+5.).alias("A"),  # add 5 to column A
+                       (pl.col("A")+2.).alias("B")]) # add 2 to column A as column B value
+            ).otherwise(pl.struct(["A","B"])).alias("_newconstruct1"),
+        pl.when(pl.col("cars") == "toyota").then(
+            pl.struct([(pl.col("A")*10.).alias("C"),
+                       (pl.col("A")**2.).alias("D")])
+            ).otherwise(pl.struct(["C","D"])).alias("_newconstruct2"),
+    ]).drop(["A","B","C","D"]).unnest(["_newconstruct1","_newconstruct2"])
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # DATAFRAME JOINS/MERGES
@@ -201,56 +230,27 @@ def force_vstack(df1:pl.DataFrame, df2:pl.DataFrame):
     """
     newcols1 = set(df2.columns) - set(df1.columns)
     newcols2 = set(df1.columns) - set(df2.columns)
+    df1_withcols_exp = []
+    df2_withcols_exp = []
     if newcols1 != set():
         for c in newcols1:
-            t = df2[:1,c].dtypes[0]
-            if t in [pl.Int64, pl.Int32]:
-                df1 = df1.lazy().with_columns([pl.Series([None]).cast(pl.Float64).alias(c)]).collect()
-                df2 = df2.lazy().with_columns([pl.col(c).cast(pl.Float64)]).collect()
+            t = df2[c].dtype
+            if t in [pl.Int64, pl.Int32, pl.Int16, pl.Int8]:
+                df1_withcols_exp.append(pl.Series([None]).cast(pl.Float64).alias(c))
+                df2_withcols_exp.append(pl.col(c).cast(pl.Float64))
             else:
-                df1 = df1.lazy().with_columns([pl.Series([None]).cast(t).alias(c)]).collect()
+                df1_withcols_exp.append(pl.Series([None]).cast(t).alias(c))
     if newcols2 != set():
         for c in newcols2:
-            t = df1[:1,c].dtypes[0]
-            if t in [pl.Int64, pl.Int32]:
-                df2 = df2.lazy().with_columns([pl.Series([None]).cast(pl.Float64).alias(c)]).collect()
-                df1 = df1.lazy().with_columns([pl.col(c).cast(pl.Float64)]).collect()
+            t = df1[c].dtype
+            if t in [pl.Int64, pl.Int32, pl.Int16, pl.Int8]:
+                df2_withcols_exp.append(pl.Series([None]).cast(pl.Float64).alias(c))
+                df1_withcols_exp.append(pl.col(c).cast(pl.Float64))
             else:
-                df2 = df2.lazy().with_columns([pl.Series([None]).cast(t).alias(c)]).collect()
-    return df1.vstack(df2[:,df1.columns])
-
-
-def convert_nan_to_null(df:pl.DataFrame, specified_columns:list=None):
-    """ Convert the Float NaN (np.nan) values to the Null values for the float column. This is to avoid the issue in
-        pl.Series where the df[c].sum() could be NaN if column c has NaN values instead of Null values. When converting
-        to Null values, the df[c].sum() then can calculate sum by ignoring Null values
-
-    Parameters
-    ----------
-    df : pl.DataFrame
-        Source polars dataframe
-    specified_columns: list, optional
-        It specifies which columns to perform the NaN to Null converstion. If not specified (as None), then
-        the program will convert all float columns. The default value is None
-
-    Returns
-    -------
-    pl.DataFrame
-        Resulting dataframe
-
-    Examples:
-    -------
-        >>> df = pl.DataFrame({"A": [1, 2, 3, 4, 5],"B": [5, 4, 3, np.nan, 1]})
-        >>> print(df["B"].sum())
-        >>> print(convert_nan_to_null(df)["B"].sum())
-    """
-    for i,c in enumerate(df.columns):
-        if df.dtypes[i] in [pl.Float32, pl.Float64]:
-            if df[c].is_nan().sum()>0:
-                vs = df[c]
-                vs[vs.is_nan()]=None
-                df = df.with_columns([vs.alias(c)])
-    return df
+                df2_withcols_exp.append(pl.Series([None]).cast(t).alias(c))
+    df1 = df1.with_columns(df1_withcols_exp)
+    df2 = df2.with_columns(df2_withcols_exp)
+    return df1.vstack(df2.select(df1.columns))
 
 
 def fast_query(df:pl.DataFrame, column:str, column_val, check_if_data_sorted:bool=True):
@@ -333,3 +333,78 @@ def upload_data_to_database(df:pl.DataFrame, conn, DB_tablename:str):
     # do the insert
     psycopg2.extras.execute_batch(cur, insert_stmt, df.rows())
     conn.commit()
+
+
+def cleanup_null_vals(df:pl.DataFrame, string_null_vals:list=["Source Undefined","N/A","None"]):
+    """ This is to clean up all the Null/Nan values in the string and float columns, if it's float, then
+        change all null values to "", blank string, otherwise, change all nan float values to
+        Null (None) values for better numerical calculations
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        Source dataframe
+    string_null_vals : list, optional
+        List of string values as invalid values, hence treat as null values. The default is ["Source Undefined","N/A","None"].
+
+    Returns
+    -------
+    pl.DataFrame
+        Resulting DataFrame
+
+    Examples
+    -------
+        >>> df = pl.DataFrame({"fruits": ["banana", "Source Undefined", "apple", None, "banana"],"A": [1, 2, 3, np.nan, 5],"D":[np.nan]*5})
+        >>> cleanup_null_vals(df, string_null_vals=["Source Undefined","N/A","None"])
+    """
+    df2 = df.lazy()
+    types = df.dtypes
+    withcols = []
+    string_null_vals_lower = [x.lower() for x in string_null_vals]
+    for i, c in enumerate(df.columns):
+        t = types[i]
+        if t == pl.Utf8:
+            withcols.append(pl.when(pl.col(c).str.to_lowercase().is_in(string_null_vals_lower)).then("").otherwise(pl.col(c).fill_null("")).alias(c))
+        elif t in [pl.Float32, pl.Float64]:
+            withcols.append(pl.col(c).fill_nan(None))
+        else:
+            pass
+    return df2.with_columns(withcols).collect()
+
+
+def remove_allempty_cols(df:pl.DataFrame):
+    """ This is to remove all columns that have either only blank string ('') or only Null/Nan values, i.e. empty columns are to be removed
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        Source dataframe
+
+    Returns
+    -------
+    pl.DataFrame
+        Resulting dataframe
+
+    Examples
+    -------
+        >>> df = pl.DataFrame({"fruits": ["banana", "Source Undefined", "apple", None, "banana"],"A": [1, 2, 3, np.nan, 5],"D":[np.nan]*5})
+        >>> remove_allempty_cols(df)
+    """
+    df2 = df.lazy()
+    types = df.dtypes
+    selctcols = []
+    for i, c in enumerate(df.columns):
+        t = types[i]
+        if t == pl.Utf8:
+            selctcols.append((pl.col(c).is_not_null() & (pl.col(c) != "")).sum().alias(c))
+        elif t in [pl.Float32, pl.Float64]:
+            selctcols.append((pl.col(c).is_not_null() & pl.col(c).is_not_nan()).sum().alias(c))
+        else:
+            selctcols.append(pl.Series([1]).alias(c))
+    d = df2.select(selctcols).collect()
+    idx = np.where(np.array(d.rows()[0]) == 0)[0]
+    if len(idx) == 0:
+        return df
+    else:
+        cols2drop = np.array(df.columns)[idx].tolist()
+        return df2.drop(cols2drop).collect()
