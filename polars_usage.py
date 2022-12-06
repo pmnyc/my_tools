@@ -204,12 +204,13 @@ def pl_weighted_avg(df:pl.DataFrame, num_cols:list, weight_col:str, groupby_cols
         num_cols = [num_cols]
     if isinstance(groupby_cols, str):
         groupby_cols = [groupby_cols]
+    allcols = groupby_cols+num_cols+[weight_col]
     if add_effective_wgts:
-        return df.groupby(groupby_cols).agg([((pl.col(c)*pl.col(weight_col)).sum()/(~pl.col(c).is_null() * pl.col(weight_col)).sum()).alias(f"{c}_avg") for c in num_cols] + \
-            [pl.col(weight_col).sum()] + [(~pl.col(c).is_null() * pl.col(weight_col)).sum().alias(f"eff_wgt_by_{c}") for c in num_cols])
+        return df.lazy().select(allcols).groupby(groupby_cols).agg([((pl.col(c)*pl.col(weight_col)).sum()/(~pl.col(c).is_null() * pl.col(weight_col)).sum()).alias(f"{c}_avg") for c in num_cols] + \
+            [pl.col(weight_col).sum()] + [(~pl.col(c).is_null() * pl.col(weight_col)).sum().alias(f"eff_wgt_by_{c}") for c in num_cols]).collect()
     else:
-        return df.groupby(groupby_cols).agg([((pl.col(c)*pl.col(weight_col)).sum()/(~pl.col(c).is_null() * pl.col(weight_col)).sum()).alias(f"{c}_avg") for c in num_cols] + \
-            [pl.col(weight_col).sum()])
+        return df.lazy().select(allcols).groupby(groupby_cols).agg([((pl.col(c)*pl.col(weight_col)).sum()/(~pl.col(c).is_null() * pl.col(weight_col)).sum()).alias(f"{c}_avg") for c in num_cols] + \
+            [pl.col(weight_col).sum()]).collect()
 
 
 def force_vstack(df1:pl.DataFrame, df2:pl.DataFrame):
