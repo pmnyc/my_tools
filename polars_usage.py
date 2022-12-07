@@ -413,7 +413,6 @@ def remove_allempty_cols(df:pl.DataFrame):
         >>> df = pl.DataFrame({"fruits": ["banana", "Source Undefined", "apple", None, "banana"],"A": [1, 2, 3, np.nan, 5],"D":[np.nan]*5})
         >>> remove_allempty_cols(df)
     """
-    df2 = df.lazy()
     types = df.dtypes
     selctcols = []
     for i, c in enumerate(df.columns):
@@ -426,13 +425,23 @@ def remove_allempty_cols(df:pl.DataFrame):
             selctcols.append((pl.col(c).is_not_null()).sum().alias(c))
         else:
             selctcols.append(pl.Series([1]).alias(c))
-    d = df2.select(selctcols).collect()
+    d = df.head(50).select(selctcols)
     idx = np.where(np.array(d.rows()[0]) == 0)[0]
     if len(idx) == 0:
         return df
     else:
         cols2drop = np.array(df.columns)[idx].tolist()
-        return df2.drop(cols2drop).collect()
+        if len(df) <= 50:
+            return df.drop(cols2drop)
+    # now narrow down to selected list
+    selctcols2 = [selctcols[i] for i in idx]
+    d = df.lazy().select(selctcols2).collect()
+    idx = np.where(np.array(d.rows()[0]) == 0)[0]
+    if len(idx) == 0:
+        return df
+    else:
+        cols2drop = np.array(cols2drop)[idx].tolist()
+        return df.drop(cols2drop)
 
 
 def assign_cut_bin(col:str, cut_boundaries:list):
