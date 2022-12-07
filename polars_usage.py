@@ -236,6 +236,17 @@ def force_vstack(df1:pl.DataFrame, df2:pl.DataFrame):
         >>> df2 = pl.DataFrame({"a": ["foo", "spam", "eggs"], "c": [3, 2, 2]})
         >>> force_vstack(df1, df2)
     """
+    mismatch_cols=[]
+    for c in set(df2.columns) & set(df1.columns):
+        t1, t2 = df1[c].dtype, df2[c].dtype
+        if t1 != t2:
+            if t1 == pl.Utf8 or t2 == pl.Utf8:
+                mismatch_cols.append(pl.col(c).cast(pl.Utf8))
+            elif t1 in [pl.Float32,pl.Float64] or t2 in [pl.Float32,pl.Float64]:
+                mismatch_cols.append(pl.col(c).cast(pl.Float64))
+            elif t1 in [pl.Int64, pl.Int32, pl.Int16, pl.Int8] and t2 in [pl.Int64, pl.Int32, pl.Int16, pl.Int8]:
+                mismatch_cols.append(pl.col(c).cast(pl.Int64))
+    #
     newcols1 = set(df2.columns) - set(df1.columns)
     newcols2 = set(df1.columns) - set(df2.columns)
     df1_withcols_exp = []
@@ -256,8 +267,12 @@ def force_vstack(df1:pl.DataFrame, df2:pl.DataFrame):
                 df1_withcols_exp.append(pl.col(c).cast(pl.Float64))
             else:
                 df2_withcols_exp.append(pl.Series([None]).cast(t).alias(c))
-    df1 = df1.with_columns(df1_withcols_exp)
-    df2 = df2.with_columns(df2_withcols_exp)
+    if len(mismatch_cols) >0:
+        df1 = df1.lazy().with_columns(mismatch_cols).with_columns(df1_withcols_exp).collect()
+        df2 = df2.lazy().with_columns(mismatch_cols).with_columns(df2_withcols_exp).collect()
+    else:
+        df1 = df1.lazy().with_columns(df1_withcols_exp).collect()
+        df2 = df2.lazy().with_columns(df2_withcols_exp).collect()
     return df1.vstack(df2.select(df1.columns))
 
 
@@ -407,7 +422,7 @@ def remove_allempty_cols(df:pl.DataFrame):
             selctcols.append((pl.col(c).is_not_null() & (pl.col(c) != "")).sum().alias(c))
         elif t in [pl.Float32, pl.Float64]:
             selctcols.append((pl.col(c).is_not_null() & pl.col(c).is_not_nan()).sum().alias(c))
-        elif t in [pl.Int8,pl.Int16,pl.Int32,pl.Int64]:
+        elif t in [pl.Int8, pl.Int16,pl.Int32,pl.Int64]:
             selctcols.append((pl.col(c).is_not_null()).sum().alias(c))
         else:
             selctcols.append(pl.Series([1]).alias(c))
@@ -418,3 +433,35 @@ def remove_allempty_cols(df:pl.DataFrame):
     else:
         cols2drop = np.array(df.columns)[idx].tolist()
         return df2.drop(cols2drop).collect()
+
+
+def assign_cut_bin(col:str, cut_boundaries:list):
+    """ Assign the cut bins for column col value based on the cut boundaries. The idea is to create the statement using pl.when
+        so that it performs case, when type of statements to assign new value based on each condition
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        Source dataframe
+    cut_boundaries:list
+        The list of boundaries for cuts
+
+    Returns
+    -------
+    pl.Expr
+        The statement that applies to the with_columns for creating bin column
+    Examples
+    -------
+        >>> df = pl.DataFrame({"fruits": ["banana", "Source Undefined", "apple", None, "banana"],"A": [1, 2, 3, 4, 5]})
+        >>> df.with_column(assign_cut_bin(col="A", cut_boundaries=[2.5,4.1]).alias("cut_bin"))
+    """
+    cut_boundaries = [-1e10] + cut_boundaries + [1e10]
+    for i in range(len(cut_boundaries)-1):
+        v1, v2 = cut_boundaries[i], cut_boundaries[i+1]
+        if i == 0:
+            w = pl.when((pl.col(col) >= v1) & (pl.col(col) <v2)).then(f"<{v2}").otherwise("")
+        elif i == len(cut_boundaries)-2:
+            w = pl.when((pl.col(col) >= v1) & (pl.col(col) <v2)).then(f"{v1}+").otherwise(w)
+        else:
+            w = pl.when((pl.col(col) >= v1) & (pl.col(col) <v2)).then(f"{v1}~{v2}").otherwise(w)
+    return w
