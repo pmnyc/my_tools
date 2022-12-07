@@ -407,6 +407,8 @@ def remove_allempty_cols(df:pl.DataFrame):
             selctcols.append((pl.col(c).is_not_null() & (pl.col(c) != "")).sum().alias(c))
         elif t in [pl.Float32, pl.Float64]:
             selctcols.append((pl.col(c).is_not_null() & pl.col(c).is_not_nan()).sum().alias(c))
+        elif t in [pl.Int8,pl.Int16,pl.Int32,pl.Int64]:
+            selctcols.append((pl.col(c).is_not_null()).sum().alias(c))
         else:
             selctcols.append(pl.Series([1]).alias(c))
     d = df2.select(selctcols).collect()
