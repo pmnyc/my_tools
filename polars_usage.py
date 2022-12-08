@@ -474,3 +474,32 @@ def assign_cut_bin(col:str, cut_boundaries:list):
         else:
             w = pl.when((pl.col(col) >= v1) & (pl.col(col) <v2)).then(f"{v1}~{v2}").otherwise(w)
     return w
+
+# DataBase Connection
+def connect_to_database_sample():
+    # connect to snowflake database using SSO (single-sign-on) by browser
+    import snowflake.connector
+    con = snowflake.connector.connect(
+        #host="mycompany.us-east-1.snowflakecomputing.com",
+        #protocol='https',
+        port=443,
+        user="MyUser",
+        #password="", it's SSO, so no need to set password in this case
+        account="mycompany.us-east-1",
+        warehouse="MyWarehouse",
+        authenticator='externalbrowser',
+    )
+    cs = con.cursor()
+    cs.execute("use role MYREADWRITEROLE")
+    cs.execute("use database MYDATABASE")
+    qry = cs.execute("select * from SCHEMA.TABLE limit 5")
+    df = pl.DataFrame(qry.fetchall(), columns=[t.name for t in cs.description]) # same applies to pandas
+
+    # connect to Oracle DataBase
+    import cx_Oracle
+    host = "myhost.oraclecloudatcustomer.com"
+    service= "myservice.oraclecloudatcustomer.com"
+    con = cx_Oracle.connect(user="MyUser", password="MyPassword", dsn=f"{host}/{service}")
+    cs = con.cursor()
+    qry = cs.execute("select * from SCHEMA.TABLE where rownum <= 5")
+    df = pl.DataFrame(qry.fetchall(), columns=[t[0] for t in cs.description])
